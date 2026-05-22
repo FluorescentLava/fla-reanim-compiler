@@ -215,11 +215,11 @@
                                 VerticalAlignment="Center"
                                 Spacing="6">
 
-                        <TextBlock
+                        <TextBlock x:Name="DropTitleText"
                             Text="拖放 .fla 文件到这里"
                             Style="{ThemeResource SubtitleTextBlockStyle}" />
 
-                        <TextBlock
+                        <TextBlock x:Name="DropDetailText"
                             Text="支持多个文件，输出保存在原目录"
                             Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
 
@@ -284,13 +284,12 @@
 
                         <ListView.ItemTemplate>
 
-                            <DataTemplate
-                                x:DataType="local:ConversionLogItem">
+                            <DataTemplate>
 
                                 <Border Margin="0,4"
                                         Padding="14,12"
-                                        Background="{x:Bind Background}"
-                                        BorderBrush="{x:Bind BorderBrush}"
+                                        Background="{Binding Background}"
+                                        BorderBrush="{Binding BorderBrush}"
                                         BorderThickness="1"
                                         CornerRadius="8">
 
@@ -304,15 +303,15 @@
                                         <Ellipse Width="8"
                                                  Height="8"
                                                  Margin="0,7,0,0"
-                                                 Fill="{x:Bind Accent}"/>
+                                                 Fill="{Binding Accent}"/>
 
                                         <StackPanel Grid.Column="1"
                                                     Spacing="4">
 
-                                            <TextBlock Text="{x:Bind Title}"
+                                            <TextBlock Text="{Binding Title}"
                                                        Style="{ThemeResource BodyStrongTextBlockStyle}" />
 
-                                            <TextBlock Text="{x:Bind Detail}"
+                                            <TextBlock Text="{Binding Detail}"
                                                        TextWrapping="Wrap"
                                                        Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
 
