@@ -12,6 +12,9 @@
                     IsPaneOpen="True"
                     OpenPaneLength="232"
                     CompactPaneLength="48"
+                    PaneOpened="RootNavigation_PaneOpened"
+                    PaneClosed="RootNavigation_PaneClosed"
+                    DisplayModeChanged="RootNavigation_DisplayModeChanged"
                     Background="Transparent">
 
         <NavigationView.MenuItems>
@@ -30,8 +33,15 @@
 
         <NavigationView.PaneFooter>
 
-            <StackPanel Margin="18,0,18,20"
+            <StackPanel x:Name="PaneFooterDetails"
+                        Margin="18,0,18,20"
                         Spacing="8">
+
+                <StackPanel.Transitions>
+                    <TransitionCollection>
+                        <EntranceThemeTransition FromHorizontalOffset="-12"/>
+                    </TransitionCollection>
+                </StackPanel.Transitions>
 
                 <TextBlock Text="格式"
                            FontSize="12"
@@ -154,7 +164,16 @@
                      IsOpen="True"
                      Severity="Informational"
                      Title="等待文件"
-                     Message="可以拖放多个 .fla 文件，也可以点击选择文件。"/>
+                     Message="可以拖放多个 .fla 文件，也可以点击选择文件。">
+
+                <InfoBar.Transitions>
+                    <TransitionCollection>
+                        <EntranceThemeTransition FromVerticalOffset="-8"/>
+                        <RepositionThemeTransition/>
+                    </TransitionCollection>
+                </InfoBar.Transitions>
+
+            </InfoBar>
 
 
             <Border x:Name="DropSurface"
@@ -243,6 +262,12 @@
                                 VerticalAlignment="Center"
                                 Spacing="10">
 
+                        <StackPanel.Transitions>
+                            <TransitionCollection>
+                                <EntranceThemeTransition FromVerticalOffset="12"/>
+                            </TransitionCollection>
+                        </StackPanel.Transitions>
+
                         <FontIcon Glyph="&#xE8A5;"
                                   FontSize="38"
                                   Opacity="0.45"/>
@@ -258,6 +283,13 @@
                     <ListView x:Name="LogList"
                               ItemsSource="{x:Bind LogItems}"
                               SelectionMode="None">
+
+                        <ListView.ItemContainerTransitions>
+                            <TransitionCollection>
+                                <AddDeleteThemeTransition/>
+                                <RepositionThemeTransition/>
+                            </TransitionCollection>
+                        </ListView.ItemContainerTransitions>
 
                         <ListView.ItemContainerStyle>
 
@@ -280,6 +312,12 @@
                                         BorderBrush="{Binding BorderBrush}"
                                         BorderThickness="1"
                                         CornerRadius="8">
+
+                                    <Border.Transitions>
+                                        <TransitionCollection>
+                                            <EntranceThemeTransition FromVerticalOffset="-10"/>
+                                        </TransitionCollection>
+                                    </Border.Transitions>
 
                                     <Grid ColumnSpacing="12">
 

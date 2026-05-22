@@ -3,6 +3,7 @@ using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
+using Microsoft.UI.Xaml.Media.Animation;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Runtime.InteropServices;
@@ -36,6 +37,9 @@ public partial class MainWindow : Window
     private Brush? _dropIdleBackground;
     private Brush? _dropIdleBorderBrush;
     private Brush? _dropIdleIconBackground;
+    private Storyboard? _dropScaleStoryboard;
+    private Storyboard? _statusOpacityStoryboard;
+    private readonly DispatcherTimer _statusHideTimer = new();
     private int _minimumWidthPixels;
     private int _minimumHeightPixels;
     private bool _busy;
@@ -56,7 +60,15 @@ public partial class MainWindow : Window
         ConfigureWindow();
 
         LogItems.CollectionChanged += (_, _) => UpdateEmptyState();
+        _statusHideTimer.Interval = TimeSpan.FromSeconds(4.5);
+        _statusHideTimer.Tick += (_, _) =>
+        {
+            _statusHideTimer.Stop();
+            HideStatusInfoBar();
+        };
+
         UpdateEmptyState();
+        UpdatePaneFooter();
     }
 
     private void ConfigureWindow()
@@ -118,7 +130,7 @@ public partial class MainWindow : Window
             return;
 
         LogItems.Clear();
-        SetStatus(InfoBarSeverity.Informational, "等待文件", "可以拖放多个 .fla 文件，也可以点击选择文件。");
+        SetStatus(InfoBarSeverity.Informational, "等待文件", "可以拖放多个 .fla 文件，也可以点击选择文件。", autoHide: false);
         DropTitleText.Text = "拖放 .fla 文件到这里";
         DropDetailText.Text = "支持多个文件，输出保存在原目录";
         SetDropHighlighted(false);
@@ -224,7 +236,7 @@ public partial class MainWindow : Window
 
         if (busy)
         {
-            SetStatus(InfoBarSeverity.Informational, $"正在处理 {count} 个文件", "解析 FLA 并写入 compiled cache。");
+            SetStatus(InfoBarSeverity.Informational, $"正在处理 {count} 个文件", "解析 FLA 并写入 compiled cache。", autoHide: false);
             DropTitleText.Text = "正在转换";
             DropDetailText.Text = "请稍等，转换完成后会写入原目录";
             SetDropHighlighted(false);
@@ -238,6 +250,7 @@ public partial class MainWindow : Window
             DropSurface.Background = new SolidColorBrush(Windows.UI.Color.FromArgb(255, 243, 249, 255));
             DropSurface.BorderBrush = new SolidColorBrush(Windows.UI.Color.FromArgb(255, 0, 95, 184));
             DropIconSurface.Background = new SolidColorBrush(Windows.UI.Color.FromArgb(255, 232, 244, 255));
+            AnimateDropScale(1.01);
             return;
         }
 
@@ -249,14 +262,24 @@ public partial class MainWindow : Window
 
         if (_dropIdleIconBackground is not null)
             DropIconSurface.Background = _dropIdleIconBackground;
+
+        AnimateDropScale(1.0);
     }
 
-    private void SetStatus(InfoBarSeverity severity, string title, string message)
+    private void SetStatus(InfoBarSeverity severity, string title, string message, bool autoHide = true)
     {
+        _statusHideTimer.Stop();
+        _statusOpacityStoryboard?.Stop();
+
         StatusInfoBar.Severity = severity;
         StatusInfoBar.Title = title;
         StatusInfoBar.Message = message;
+        StatusInfoBar.Opacity = 0;
         StatusInfoBar.IsOpen = true;
+        StartOpacityAnimation(StatusInfoBar, 1, 160);
+
+        if (autoHide)
+            _statusHideTimer.Start();
     }
 
     private void AddLog(string title, string detail, bool? success)
@@ -299,5 +322,75 @@ public partial class MainWindow : Window
         bool showEmptyState = !_busy && LogItems.Count == 0;
         EmptyState.Visibility = showEmptyState ? Visibility.Visible : Visibility.Collapsed;
         LogList.Visibility = LogItems.Count == 0 ? Visibility.Collapsed : Visibility.Visible;
+    }
+
+    private void UpdatePaneFooter()
+    {
+        bool showFooter = RootNavigation.IsPaneOpen && RootNavigation.DisplayMode != NavigationViewDisplayMode.Minimal;
+        PaneFooterDetails.Visibility = showFooter ? Visibility.Visible : Visibility.Collapsed;
+    }
+
+    private void RootNavigation_PaneOpened(NavigationView sender, object args)
+    {
+        UpdatePaneFooter();
+    }
+
+    private void RootNavigation_PaneClosed(NavigationView sender, object args)
+    {
+        UpdatePaneFooter();
+    }
+
+    private void RootNavigation_DisplayModeChanged(NavigationView sender, NavigationViewDisplayModeChangedEventArgs args)
+    {
+        UpdatePaneFooter();
+    }
+
+    private void HideStatusInfoBar()
+    {
+        if (!StatusInfoBar.IsOpen || _busy)
+            return;
+
+        StartOpacityAnimation(StatusInfoBar, 0, 220, () =>
+        {
+            StatusInfoBar.IsOpen = false;
+            StatusInfoBar.Opacity = 1;
+        });
+    }
+
+    private void AnimateDropScale(double scale)
+    {
+        _dropScaleStoryboard?.Stop();
+        _dropScaleStoryboard = new Storyboard();
+        _dropScaleStoryboard.Children.Add(CreateDoubleAnimation(DropScale, nameof(ScaleTransform.ScaleX), scale, 140));
+        _dropScaleStoryboard.Children.Add(CreateDoubleAnimation(DropScale, nameof(ScaleTransform.ScaleY), scale, 140));
+        _dropScaleStoryboard.Begin();
+    }
+
+    private void StartOpacityAnimation(UIElement element, double to, double milliseconds, Action? completed = null)
+    {
+        _statusOpacityStoryboard?.Stop();
+        _statusOpacityStoryboard = new Storyboard();
+        _statusOpacityStoryboard.Children.Add(CreateDoubleAnimation(element, nameof(UIElement.Opacity), to, milliseconds));
+
+        if (completed is not null)
+        {
+            _statusOpacityStoryboard.Completed += (_, _) => completed();
+        }
+
+        _statusOpacityStoryboard.Begin();
+    }
+
+    private static DoubleAnimation CreateDoubleAnimation(DependencyObject target, string propertyPath, double to, double milliseconds)
+    {
+        var animation = new DoubleAnimation
+        {
+            To = to,
+            Duration = new Duration(TimeSpan.FromMilliseconds(milliseconds)),
+            EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
+        };
+
+        Storyboard.SetTarget(animation, target);
+        Storyboard.SetTargetProperty(animation, propertyPath);
+        return animation;
     }
 }
