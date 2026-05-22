@@ -37,9 +37,9 @@ public partial class MainWindow : Window
     private Brush? _dropIdleBackground;
     private Brush? _dropIdleBorderBrush;
     private Brush? _dropIdleIconBackground;
-    private Storyboard? _dropScaleStoryboard;
     private Storyboard? _statusOpacityStoryboard;
     private readonly DispatcherTimer _statusHideTimer = new();
+    private UIElement? _paneFooterContent;
     private int _minimumWidthPixels;
     private int _minimumHeightPixels;
     private bool _busy;
@@ -54,6 +54,7 @@ public partial class MainWindow : Window
         SystemBackdrop = new MicaBackdrop();
 
         _windowHandle = WindowNative.GetWindowHandle(this);
+        _paneFooterContent = PaneFooterDetails;
         _dropIdleBackground = DropSurface.Background;
         _dropIdleBorderBrush = DropSurface.BorderBrush;
         _dropIdleIconBackground = DropIconSurface.Background;
@@ -69,6 +70,7 @@ public partial class MainWindow : Window
 
         UpdateEmptyState();
         UpdatePaneFooter();
+        SetStatus(InfoBarSeverity.Informational, "等待文件", "可以拖放多个 .fla 文件，也可以点击选择文件。", autoHide: false);
     }
 
     private void ConfigureWindow()
@@ -250,7 +252,6 @@ public partial class MainWindow : Window
             DropSurface.Background = new SolidColorBrush(Windows.UI.Color.FromArgb(255, 243, 249, 255));
             DropSurface.BorderBrush = new SolidColorBrush(Windows.UI.Color.FromArgb(255, 0, 95, 184));
             DropIconSurface.Background = new SolidColorBrush(Windows.UI.Color.FromArgb(255, 232, 244, 255));
-            AnimateDropScale(1.01);
             return;
         }
 
@@ -262,8 +263,6 @@ public partial class MainWindow : Window
 
         if (_dropIdleIconBackground is not null)
             DropIconSurface.Background = _dropIdleIconBackground;
-
-        AnimateDropScale(1.0);
     }
 
     private void SetStatus(InfoBarSeverity severity, string title, string message, bool autoHide = true)
@@ -276,7 +275,7 @@ public partial class MainWindow : Window
         StatusInfoBar.Message = message;
         StatusInfoBar.Opacity = 0;
         StatusInfoBar.IsOpen = true;
-        StartOpacityAnimation(StatusInfoBar, 1, 160);
+        StartOpacityAnimation(StatusInfoBar, 1, 220);
 
         if (autoHide)
             _statusHideTimer.Start();
@@ -326,8 +325,19 @@ public partial class MainWindow : Window
 
     private void UpdatePaneFooter()
     {
-        bool showFooter = RootNavigation.IsPaneOpen && RootNavigation.DisplayMode != NavigationViewDisplayMode.Minimal;
-        PaneFooterDetails.Visibility = showFooter ? Visibility.Visible : Visibility.Collapsed;
+        bool showFooter = RootNavigation.IsPaneOpen && RootNavigation.DisplayMode == NavigationViewDisplayMode.Expanded;
+        if (showFooter)
+        {
+            if (RootNavigation.PaneFooter is null && _paneFooterContent is not null)
+                RootNavigation.PaneFooter = _paneFooterContent;
+
+            PaneFooterDetails.Visibility = Visibility.Visible;
+            return;
+        }
+
+        PaneFooterDetails.Visibility = Visibility.Collapsed;
+        if (RootNavigation.PaneFooter is not null)
+            RootNavigation.PaneFooter = null;
     }
 
     private void RootNavigation_PaneOpened(NavigationView sender, object args)
@@ -355,15 +365,6 @@ public partial class MainWindow : Window
             StatusInfoBar.IsOpen = false;
             StatusInfoBar.Opacity = 1;
         });
-    }
-
-    private void AnimateDropScale(double scale)
-    {
-        _dropScaleStoryboard?.Stop();
-        _dropScaleStoryboard = new Storyboard();
-        _dropScaleStoryboard.Children.Add(CreateDoubleAnimation(DropScale, nameof(ScaleTransform.ScaleX), scale, 140));
-        _dropScaleStoryboard.Children.Add(CreateDoubleAnimation(DropScale, nameof(ScaleTransform.ScaleY), scale, 140));
-        _dropScaleStoryboard.Begin();
     }
 
     private void StartOpacityAnimation(UIElement element, double to, double milliseconds, Action? completed = null)

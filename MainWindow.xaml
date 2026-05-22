@@ -161,7 +161,8 @@
 
             <InfoBar x:Name="StatusInfoBar"
                      Grid.Row="2"
-                     IsOpen="True"
+                     IsOpen="False"
+                     Opacity="0"
                      Severity="Informational"
                      Title="等待文件"
                      Message="可以拖放多个 .fla 文件，也可以点击选择文件。">
@@ -187,14 +188,6 @@
                     DragOver="DropSurface_DragOver"
                     DragLeave="DropSurface_DragLeave"
                     Drop="DropSurface_Drop">
-
-                <Border.RenderTransform>
-
-                    <ScaleTransform x:Name="DropScale"
-                                    ScaleX="1"
-                                    ScaleY="1"/>
-
-                </Border.RenderTransform>
 
                 <Grid ColumnSpacing="18">
 
