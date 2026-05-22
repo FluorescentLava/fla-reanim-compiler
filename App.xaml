@@ -1,0 +1,17 @@
+<Application
+    x:Class="FlaReanimCompiler.App"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="using:Microsoft.UI.Xaml.Controls">
+  <Application.Resources>
+    <ResourceDictionary>
+      <ResourceDictionary.MergedDictionaries>
+        <controls:XamlControlsResources />
+      </ResourceDictionary.MergedDictionaries>
+
+      <SolidColorBrush x:Key="SuccessAccentBrush" Color="#0F7B5F" />
+      <SolidColorBrush x:Key="WarningAccentBrush" Color="#8A6D1D" />
+      <SolidColorBrush x:Key="ErrorAccentBrush" Color="#C42B1C" />
+    </ResourceDictionary>
+  </Application.Resources>
+</Application>
