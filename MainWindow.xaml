@@ -12,6 +12,8 @@
                     IsPaneOpen="True"
                     OpenPaneLength="232"
                     CompactPaneLength="48"
+                    PaneOpening="RootNavigation_PaneOpening"
+                    PaneClosing="RootNavigation_PaneClosing"
                     PaneOpened="RootNavigation_PaneOpened"
                     PaneClosed="RootNavigation_PaneClosed"
                     DisplayModeChanged="RootNavigation_DisplayModeChanged"

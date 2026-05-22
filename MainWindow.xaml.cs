@@ -37,6 +37,7 @@ public partial class MainWindow : Window
     private Brush? _dropIdleBorderBrush;
     private Brush? _dropIdleIconBackground;
     private readonly DispatcherTimer _statusHideTimer = new();
+    private readonly DispatcherTimer _paneFooterRefreshTimer = new();
     private int _minimumWidthPixels;
     private int _minimumHeightPixels;
     private bool _busy;
@@ -63,6 +64,12 @@ public partial class MainWindow : Window
         {
             _statusHideTimer.Stop();
             CloseStatusInfoBar();
+        };
+        _paneFooterRefreshTimer.Interval = TimeSpan.FromMilliseconds(260);
+        _paneFooterRefreshTimer.Tick += (_, _) =>
+        {
+            _paneFooterRefreshTimer.Stop();
+            UpdatePaneFooter();
         };
 
         UpdateEmptyState();
@@ -328,13 +335,28 @@ public partial class MainWindow : Window
     private void UpdatePaneFooter()
     {
         bool showFooter = RootNavigation.IsPaneOpen && RootNavigation.DisplayMode == NavigationViewDisplayMode.Expanded;
-        PaneFooterDetails.Visibility = showFooter ? Visibility.Visible : Visibility.Collapsed;
+        SetPaneFooterVisible(showFooter);
     }
 
-    private void QueuePaneFooterUpdate()
+    private void SetPaneFooterVisible(bool visible)
     {
-        UpdatePaneFooter();
+        PaneFooterDetails.Opacity = visible ? 1 : 0;
+        PaneFooterDetails.IsHitTestVisible = visible;
+        PaneFooterDetails.Visibility = visible ? Visibility.Visible : Visibility.Collapsed;
+        PaneFooterDetails.InvalidateMeasure();
+        RootNavigation.InvalidateMeasure();
+    }
+
+    private void QueuePaneFooterUpdate(bool? visible = null)
+    {
+        if (visible is bool immediateVisibility)
+            SetPaneFooterVisible(immediateVisibility);
+        else
+            UpdatePaneFooter();
+
         DispatcherQueue.TryEnqueue(UpdatePaneFooter);
+        _paneFooterRefreshTimer.Stop();
+        _paneFooterRefreshTimer.Start();
     }
 
     private void RootNavigation_Loaded(object sender, RoutedEventArgs e)
@@ -345,6 +367,16 @@ public partial class MainWindow : Window
         _statusInitialized = true;
         QueuePaneFooterUpdate();
         SetStatus(InfoBarSeverity.Informational, "等待文件", "可以拖放多个 .fla 文件，也可以点击选择文件。", autoHide: false);
+    }
+
+    private void RootNavigation_PaneOpening(NavigationView sender, object args)
+    {
+        QueuePaneFooterUpdate(true);
+    }
+
+    private void RootNavigation_PaneClosing(NavigationView sender, object args)
+    {
+        QueuePaneFooterUpdate(false);
     }
 
     private void RootNavigation_PaneOpened(NavigationView sender, object args)
