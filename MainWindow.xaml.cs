@@ -3,7 +3,6 @@ using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
-using Microsoft.UI.Xaml.Media.Animation;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Runtime.InteropServices;
@@ -37,12 +36,11 @@ public partial class MainWindow : Window
     private Brush? _dropIdleBackground;
     private Brush? _dropIdleBorderBrush;
     private Brush? _dropIdleIconBackground;
-    private Storyboard? _statusOpacityStoryboard;
     private readonly DispatcherTimer _statusHideTimer = new();
-    private UIElement? _paneFooterContent;
     private int _minimumWidthPixels;
     private int _minimumHeightPixels;
     private bool _busy;
+    private bool _statusInitialized;
 
     public ObservableCollection<ConversionLogItem> LogItems { get; } = new();
 
@@ -54,7 +52,6 @@ public partial class MainWindow : Window
         SystemBackdrop = new MicaBackdrop();
 
         _windowHandle = WindowNative.GetWindowHandle(this);
-        _paneFooterContent = PaneFooterDetails;
         _dropIdleBackground = DropSurface.Background;
         _dropIdleBorderBrush = DropSurface.BorderBrush;
         _dropIdleIconBackground = DropIconSurface.Background;
@@ -65,12 +62,11 @@ public partial class MainWindow : Window
         _statusHideTimer.Tick += (_, _) =>
         {
             _statusHideTimer.Stop();
-            HideStatusInfoBar();
+            CloseStatusInfoBar();
         };
 
         UpdateEmptyState();
         UpdatePaneFooter();
-        SetStatus(InfoBarSeverity.Informational, "等待文件", "可以拖放多个 .fla 文件，也可以点击选择文件。", autoHide: false);
     }
 
     private void ConfigureWindow()
@@ -268,14 +264,20 @@ public partial class MainWindow : Window
     private void SetStatus(InfoBarSeverity severity, string title, string message, bool autoHide = true)
     {
         _statusHideTimer.Stop();
-        _statusOpacityStoryboard?.Stop();
 
         StatusInfoBar.Severity = severity;
         StatusInfoBar.Title = title;
         StatusInfoBar.Message = message;
-        StatusInfoBar.Opacity = 0;
-        StatusInfoBar.IsOpen = true;
-        StartOpacityAnimation(StatusInfoBar, 1, 220);
+
+        if (StatusInfoBar.IsOpen)
+        {
+            StatusInfoBar.IsOpen = false;
+            DispatcherQueue.TryEnqueue(() => StatusInfoBar.IsOpen = true);
+        }
+        else
+        {
+            StatusInfoBar.IsOpen = true;
+        }
 
         if (autoHide)
             _statusHideTimer.Start();
@@ -326,72 +328,45 @@ public partial class MainWindow : Window
     private void UpdatePaneFooter()
     {
         bool showFooter = RootNavigation.IsPaneOpen && RootNavigation.DisplayMode == NavigationViewDisplayMode.Expanded;
-        if (showFooter)
-        {
-            if (RootNavigation.PaneFooter is null && _paneFooterContent is not null)
-                RootNavigation.PaneFooter = _paneFooterContent;
+        PaneFooterDetails.Visibility = showFooter ? Visibility.Visible : Visibility.Collapsed;
+    }
 
-            PaneFooterDetails.Visibility = Visibility.Visible;
+    private void QueuePaneFooterUpdate()
+    {
+        UpdatePaneFooter();
+        DispatcherQueue.TryEnqueue(UpdatePaneFooter);
+    }
+
+    private void RootNavigation_Loaded(object sender, RoutedEventArgs e)
+    {
+        if (_statusInitialized)
             return;
-        }
 
-        PaneFooterDetails.Visibility = Visibility.Collapsed;
-        if (RootNavigation.PaneFooter is not null)
-            RootNavigation.PaneFooter = null;
+        _statusInitialized = true;
+        QueuePaneFooterUpdate();
+        SetStatus(InfoBarSeverity.Informational, "等待文件", "可以拖放多个 .fla 文件，也可以点击选择文件。", autoHide: false);
     }
 
     private void RootNavigation_PaneOpened(NavigationView sender, object args)
     {
-        UpdatePaneFooter();
+        QueuePaneFooterUpdate();
     }
 
     private void RootNavigation_PaneClosed(NavigationView sender, object args)
     {
-        UpdatePaneFooter();
+        QueuePaneFooterUpdate();
     }
 
     private void RootNavigation_DisplayModeChanged(NavigationView sender, NavigationViewDisplayModeChangedEventArgs args)
     {
-        UpdatePaneFooter();
+        QueuePaneFooterUpdate();
     }
 
-    private void HideStatusInfoBar()
+    private void CloseStatusInfoBar()
     {
         if (!StatusInfoBar.IsOpen || _busy)
             return;
 
-        StartOpacityAnimation(StatusInfoBar, 0, 220, () =>
-        {
-            StatusInfoBar.IsOpen = false;
-            StatusInfoBar.Opacity = 1;
-        });
-    }
-
-    private void StartOpacityAnimation(UIElement element, double to, double milliseconds, Action? completed = null)
-    {
-        _statusOpacityStoryboard?.Stop();
-        _statusOpacityStoryboard = new Storyboard();
-        _statusOpacityStoryboard.Children.Add(CreateDoubleAnimation(element, nameof(UIElement.Opacity), to, milliseconds));
-
-        if (completed is not null)
-        {
-            _statusOpacityStoryboard.Completed += (_, _) => completed();
-        }
-
-        _statusOpacityStoryboard.Begin();
-    }
-
-    private static DoubleAnimation CreateDoubleAnimation(DependencyObject target, string propertyPath, double to, double milliseconds)
-    {
-        var animation = new DoubleAnimation
-        {
-            To = to,
-            Duration = new Duration(TimeSpan.FromMilliseconds(milliseconds)),
-            EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
-        };
-
-        Storyboard.SetTarget(animation, target);
-        Storyboard.SetTargetProperty(animation, propertyPath);
-        return animation;
+        StatusInfoBar.IsOpen = false;
     }
 }

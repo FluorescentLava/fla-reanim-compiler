@@ -15,6 +15,7 @@
                     PaneOpened="RootNavigation_PaneOpened"
                     PaneClosed="RootNavigation_PaneClosed"
                     DisplayModeChanged="RootNavigation_DisplayModeChanged"
+                    Loaded="RootNavigation_Loaded"
                     Background="Transparent">
 
         <NavigationView.MenuItems>
@@ -162,7 +163,6 @@
             <InfoBar x:Name="StatusInfoBar"
                      Grid.Row="2"
                      IsOpen="False"
-                     Opacity="0"
                      Severity="Informational"
                      Title="等待文件"
                      Message="可以拖放多个 .fla 文件，也可以点击选择文件。">
