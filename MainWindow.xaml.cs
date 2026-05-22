@@ -54,6 +54,9 @@ public partial class MainWindow : Window
         _dropIdleBorderBrush = DropSurface.BorderBrush;
         _dropIdleIconBackground = DropIconSurface.Background;
         ConfigureWindow();
+
+        LogItems.CollectionChanged += (_, _) => UpdateEmptyState();
+        UpdateEmptyState();
     }
 
     private void ConfigureWindow()
@@ -217,6 +220,7 @@ public partial class MainWindow : Window
         ClearButton.IsEnabled = !busy;
         BusyProgress.Visibility = busy ? Visibility.Visible : Visibility.Collapsed;
         DropSurface.Opacity = busy ? 0.82 : 1.0;
+        UpdateEmptyState();
 
         if (busy)
         {
@@ -288,5 +292,12 @@ public partial class MainWindow : Window
             Background = background,
             BorderBrush = border
         });
+    }
+
+    private void UpdateEmptyState()
+    {
+        bool showEmptyState = !_busy && LogItems.Count == 0;
+        EmptyState.Visibility = showEmptyState ? Visibility.Visible : Visibility.Collapsed;
+        LogList.Visibility = LogItems.Count == 0 ? Visibility.Collapsed : Visibility.Visible;
     }
 }

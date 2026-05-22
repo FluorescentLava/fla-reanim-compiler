@@ -30,70 +30,52 @@
 
         <NavigationView.PaneFooter>
 
-            <Border Margin="12,0,12,18"
-                    Padding="14"
-                    CornerRadius="12"
-                    Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}"
-                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-                    BorderThickness="1">
+            <StackPanel Margin="18,0,18,20"
+                        Spacing="8">
 
-                <StackPanel Spacing="10">
+                <TextBlock Text="格式"
+                           FontSize="12"
+                           Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
 
-                    <TextBlock Text="文件信息"
-                               Style="{ThemeResource BodyStrongTextBlockStyle}" />
+                <Grid ColumnSpacing="12"
+                      RowSpacing="6">
 
-                    <StackPanel Spacing="8">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
 
-                        <Grid ColumnSpacing="8">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
 
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
+                    <TextBlock Text="输入"
+                               Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                    <TextBlock Grid.Column="1"
+                               Text=".fla / XFL"
+                               TextTrimming="CharacterEllipsis"/>
 
-                            <FontIcon Glyph="&#xE8A5;"
-                                      Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"/>
+                    <TextBlock Grid.Row="1"
+                               Text="输出"
+                               Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                    <TextBlock Grid.Row="1"
+                               Grid.Column="1"
+                               Text=".reanim.compiled"
+                               TextTrimming="CharacterEllipsis"/>
 
-                            <TextBlock Grid.Column="1"
-                                       Text="FLA / XFL 输入"/>
+                    <TextBlock Grid.Row="2"
+                               Text="缓存"
+                               Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                    <TextBlock Grid.Row="2"
+                               Grid.Column="1"
+                               Text="zlib + schema"
+                               TextTrimming="CharacterEllipsis"/>
 
-                        </Grid>
+                </Grid>
 
-                        <Grid ColumnSpacing="8">
-
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
-
-                            <FontIcon Glyph="&#xE7C3;"
-                                      Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"/>
-
-                            <TextBlock Grid.Column="1"
-                                       Text=".reanim.compiled 输出"/>
-
-                        </Grid>
-
-                        <Grid ColumnSpacing="8">
-
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
-
-                            <FontIcon Glyph="&#xE753;"
-                                      Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"/>
-
-                            <TextBlock Grid.Column="1"
-                                       Text="zlib + schema 压缩"/>
-
-                        </Grid>
-
-                    </StackPanel>
-
-                </StackPanel>
-
-            </Border>
+            </StackPanel>
 
         </NavigationView.PaneFooter>
 
@@ -147,10 +129,16 @@
 
                         <Button x:Name="ClearButton"
                                 Width="40"
+                                Height="32"
+                                MinWidth="0"
+                                Padding="0"
+                                HorizontalContentAlignment="Center"
+                                VerticalContentAlignment="Center"
                                 ToolTipService.ToolTip="清空日志"
                                 Click="Clear_Click">
 
-                            <FontIcon Glyph="&#xE74D;"/>
+                            <FontIcon Glyph="&#xE74D;"
+                                      FontSize="16"/>
 
                         </Button>
 
@@ -174,8 +162,8 @@
                     Padding="24"
                     Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
                     BorderBrush="{ThemeResource ControlStrokeColorDefaultBrush}"
-                    BorderThickness="2"
-                    CornerRadius="12"
+                    BorderThickness="1"
+                    CornerRadius="8"
                     AllowDrop="True"
                     DragOver="DropSurface_DragOver"
                     DragLeave="DropSurface_DragLeave"
@@ -197,9 +185,9 @@
                     </Grid.ColumnDefinitions>
 
                     <Border x:Name="DropIconSurface"
-                            Width="60"
-                            Height="60"
-                            CornerRadius="12"
+                            Width="48"
+                            Height="48"
+                            CornerRadius="8"
                             Background="{ThemeResource ControlFillColorSecondaryBrush}"
                             VerticalAlignment="Center">
 
