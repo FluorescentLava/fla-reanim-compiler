@@ -116,7 +116,7 @@
                 </Grid.RowDefinitions>
 
                 <TextBlock
-                    Text="Compile FLA/XFL"
+                    Text="FLA Reanim Compiler"
                     Style="{ThemeResource TitleTextBlockStyle}" />
 
                 <Grid Grid.Row="1"
