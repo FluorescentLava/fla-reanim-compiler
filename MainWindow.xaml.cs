@@ -30,6 +30,20 @@ public partial class MainWindow : Window
     private const int MinimumWidthDip = 720;
     private const int MinimumHeightDip = 500;
 
+    /// <summary>
+    /// Which sidebar tab is active. The two directions are separate tasks with
+    /// different inputs, outputs and failure modes, so each gets its own tab instead of
+    /// guessing the direction from the dropped file's extension.
+    /// </summary>
+    private enum WorkMode
+    {
+        /// <summary>.fla -> .reanim.compiled.</summary>
+        Pack,
+
+        /// <summary>.reanim.compiled -> .fla (plus a lossless .reanim.xml sidecar).</summary>
+        Unpack
+    }
+
     private readonly FlaToReanimConverter _converter = new();
     private readonly nint _windowHandle;
     private AppWindow? _appWindow;
@@ -42,7 +56,7 @@ public partial class MainWindow : Window
     private int _minimumHeightPixels;
     private bool _busy;
     private bool _statusInitialized;
-
+    private WorkMode _mode = WorkMode.Pack;
     public ObservableCollection<ConversionLogItem> LogItems { get; } = new();
 
     public MainWindow()
@@ -72,6 +86,7 @@ public partial class MainWindow : Window
             UpdatePaneFooter();
         };
 
+        ApplyMode(WorkMode.Pack);
         UpdateEmptyState();
         UpdatePaneFooter();
     }
@@ -122,7 +137,9 @@ public partial class MainWindow : Window
         {
             SuggestedStartLocation = PickerLocationId.DocumentsLibrary
         };
-        picker.FileTypeFilter.Add(".fla");
+        // Only the active tab's input type is offered, so the dialog cannot lead the user
+        // into picking a file this tab will reject.
+        picker.FileTypeFilter.Add(_mode == WorkMode.Pack ? ".fla" : ".compiled");
         InitializeWithWindow.Initialize(picker, _windowHandle);
 
         IReadOnlyList<StorageFile> files = await picker.PickMultipleFilesAsync();
@@ -135,9 +152,8 @@ public partial class MainWindow : Window
             return;
 
         LogItems.Clear();
-        SetStatus(InfoBarSeverity.Informational, "等待文件", "可以拖放多个 .fla 文件，也可以点击选择文件。", autoHide: false);
-        DropTitleText.Text = "拖放 .fla 文件到这里";
-        DropDetailText.Text = "支持多个文件，输出保存在原目录";
+        ResetDropSurfaceText();
+        SetStatus(InfoBarSeverity.Informational, "等待文件", GetIdleStatusMessage(), autoHide: false);
         SetDropHighlighted(false);
     }
 
@@ -173,40 +189,39 @@ public partial class MainWindow : Window
 
     private async Task ConvertFilesAsync(IEnumerable<string> paths)
     {
-        string[] flaPaths = paths
-            .Where(path => string.Equals(Path.GetExtension(path), ".fla", StringComparison.OrdinalIgnoreCase))
+        // Each tab owns one direction, so it accepts only that direction's input. A file
+        // dropped on the wrong tab is reported rather than silently converted the other
+        // way, which would hide a user mistake.
+        string[] candidates = paths
+            .Where(IsAcceptedByCurrentMode)
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .ToArray();
 
-        if (flaPaths.Length == 0)
+        if (candidates.Length == 0)
         {
-            AddLog("没有可转换的文件", "请拖入 .fla 文件。", false);
-            SetStatus(InfoBarSeverity.Warning, "没有可转换的文件", "请拖入 .fla 文件。");
+            string expected = _mode == WorkMode.Pack ? ".fla" : ".reanim.compiled";
+            string title = _mode == WorkMode.Pack ? "没有可打包的文件" : "没有可解包的文件";
+            string message = $"当前是「{GetModeTitle()}」选项卡，请拖入 {expected} 文件。";
+
+            AddLog(title, message, false);
+            SetStatus(InfoBarSeverity.Warning, title, message);
             return;
         }
 
-        SetBusy(true, flaPaths.Length);
+        SetBusy(true, candidates.Length);
 
         int ok = 0;
         int failed = 0;
-        foreach (string path in flaPaths)
+        foreach (string path in candidates)
         {
             try
             {
-                ConversionResult result = await Task.Run(() => _converter.Convert(path));
+                if (_mode == WorkMode.Pack)
+                    await ConvertFlaAsync(path);
+                else
+                    await ConvertCompiledAsync(path);
+
                 ok++;
-
-                string warningText = result.Warnings.Count == 0
-                    ? ""
-                    : $"，{result.Warnings.Count} 条提示";
-
-                AddLog(
-                    Path.GetFileName(result.OutputPath),
-                    $"{result.TrackCount} tracks / {result.FrameCount} frames / {result.Fps:0.##} fps{warningText}\n{result.OutputPath}",
-                    true);
-
-                foreach (string warning in result.Warnings.Take(3))
-                    AddLog("提示", warning, null);
             }
             catch (Exception ex)
             {
@@ -217,8 +232,8 @@ public partial class MainWindow : Window
 
         if (failed == 0)
         {
-            SetStatus(InfoBarSeverity.Success, $"完成 {ok} 个", "可以继续拖入新的 .fla 文件。");
-            DropTitleText.Text = "转换完成";
+            SetStatus(InfoBarSeverity.Success, $"完成 {ok} 个", "可以继续拖入新的文件。");
+            DropTitleText.Text = _mode == WorkMode.Pack ? "打包完成" : "解包完成";
         }
         else
         {
@@ -226,8 +241,62 @@ public partial class MainWindow : Window
             DropTitleText.Text = "部分文件失败";
         }
 
-        DropDetailText.Text = "可以继续拖入新的 .fla 文件";
+        DropDetailText.Text = "可以继续拖入新的文件";
         SetBusy(false, 0);
+    }
+
+    private static bool IsCompiledFile(string path) =>
+        path.EndsWith(".compiled", StringComparison.OrdinalIgnoreCase);
+
+    private static bool IsFlaFile(string path) =>
+        string.Equals(Path.GetExtension(path), ".fla", StringComparison.OrdinalIgnoreCase);
+
+    private bool IsAcceptedByCurrentMode(string path) =>
+        _mode == WorkMode.Pack ? IsFlaFile(path) : IsCompiledFile(path);
+
+    private string GetModeTitle() => _mode == WorkMode.Pack ? "打包" : "解包（Beta）";
+
+    /// <summary>Forward direction: .fla -> .reanim.compiled.</summary>
+    private async Task ConvertFlaAsync(string path)
+    {
+        ConversionResult result = await Task.Run(() => _converter.Convert(path));
+
+        string warningText = result.Warnings.Count == 0
+            ? ""
+            : $"，{result.Warnings.Count} 条提示";
+
+        AddLog(
+            Path.GetFileName(result.OutputPath),
+            $"{result.TrackCount} tracks / {result.FrameCount} frames / {result.Fps:0.##} fps{warningText}\n{result.OutputPath}",
+            true);
+
+        foreach (string warning in result.Warnings.Take(3))
+            AddLog("提示", warning, null);
+    }
+
+    /// <summary>Reverse direction: .reanim.compiled -> .fla (plus a .reanim.xml sidecar).</summary>
+    private async Task ConvertCompiledAsync(string path)
+    {
+        FlaConversionReport result = await Task.Run(
+            () => ReanimToFlaConverter.Convert(path, new FlaConversionOptions()));
+
+        string summary =
+            $"{result.TrackCount} tracks ({result.RenderTrackCount} 位图 / " +
+            $"{result.LocatorTrackCount} locator / {result.LabelTrackCount} 标签";
+
+        if (result.UnrepresentableTrackCount > 0)
+            summary += $" / {result.UnrepresentableTrackCount} 仅 XML";
+
+        summary += $")，{result.FrameCount} frames，{result.Fps:0.##} fps，" +
+                   $"{result.BitmapCount} 贴图";
+
+        if (result.Warnings.Count > 0)
+            summary += $"，{result.Warnings.Count} 条提示";
+
+        AddLog(Path.GetFileName(result.OutputPath), $"{summary}\n{result.OutputPath}", true);
+
+        foreach (string warning in result.Warnings.Take(3))
+            AddLog("提示", warning, null);
     }
 
     private void SetBusy(bool busy, int count)
@@ -241,9 +310,14 @@ public partial class MainWindow : Window
 
         if (busy)
         {
-            SetStatus(InfoBarSeverity.Informational, $"正在处理 {count} 个文件", "解析 FLA 并写入 compiled cache。", autoHide: false);
-            DropTitleText.Text = "正在转换";
-            DropDetailText.Text = "请稍等，转换完成后会写入原目录";
+            SetStatus(
+                InfoBarSeverity.Informational,
+                $"正在处理 {count} 个文件",
+                _mode == WorkMode.Pack ? "解析 FLA 并写入 compiled cache。" : "解析 compiled cache 并重建 FLA。",
+                autoHide: false);
+
+            DropTitleText.Text = _mode == WorkMode.Pack ? "正在打包" : "正在解包";
+            DropDetailText.Text = "请稍等，完成后会写入原目录";
             SetDropHighlighted(false);
         }
     }
@@ -366,7 +440,92 @@ public partial class MainWindow : Window
 
         _statusInitialized = true;
         QueuePaneFooterUpdate();
-        SetStatus(InfoBarSeverity.Informational, "等待文件", "可以拖放多个 .fla 文件，也可以点击选择文件。", autoHide: false);
+        SetStatus(InfoBarSeverity.Informational, "等待文件", GetIdleStatusMessage(), autoHide: false);
+    }
+
+    private void RootNavigation_SelectionChanged(NavigationView sender, NavigationViewSelectionChangedEventArgs args)
+    {
+        // Guard against the selection change fired while the view is still initialising.
+        if (args.SelectedItem is not NavigationViewItem { Tag: string tag })
+            return;
+
+        var mode = string.Equals(tag, "unpack", StringComparison.Ordinal)
+            ? WorkMode.Unpack
+            : WorkMode.Pack;
+
+        if (mode == _mode)
+            return;
+
+        if (_busy)
+        {
+            // Switching tabs mid-run would leave the progress UI describing a task that
+            // no longer matches the visible tab, so the switch is refused.
+            RevertSelectionToCurrentMode();
+            SetStatus(InfoBarSeverity.Warning, "正在转换", "请等待当前任务完成后再切换选项卡。");
+            return;
+        }
+
+        ApplyMode(mode);
+    }
+
+    /// <summary>
+    /// Points the whole shell at one direction: header, drop surface, pane footer and
+    /// idle status all describe the tab that is actually selected.
+    /// </summary>
+    private void ApplyMode(WorkMode mode)
+    {
+        _mode = mode;
+
+        bool pack = mode == WorkMode.Pack;
+        Title = pack ? "FLA Reanim Compiler — 打包" : "FLA Reanim Compiler — 解包（Beta）";
+
+        ModeSubtitleText.Text = pack
+            ? "把 .fla 编译为游戏可读取的 .reanim.compiled"
+            : "把 .reanim.compiled 还原为可编辑的 .fla（同时输出无损 .reanim.xml）";
+
+        FooterInputText.Text = pack ? ".fla" : ".reanim.compiled";
+        FooterOutputText.Text = pack ? ".reanim.compiled" : ".fla + .reanim.xml";
+
+        DropIconGlyph.Glyph = pack ? "\uE8B7" : "\uE896";
+
+        ResetDropSurfaceText();
+        SetStatus(InfoBarSeverity.Informational, "等待文件", GetIdleStatusMessage(), autoHide: false);
+    }
+
+    private void ResetDropSurfaceText()
+    {
+        if (_mode == WorkMode.Pack)
+        {
+            DropTitleText.Text = "拖放 .fla 到这里";
+            DropDetailText.Text = "支持多个文件，输出保存在原目录";
+        }
+        else
+        {
+            DropTitleText.Text = "拖放 .reanim.compiled 到这里";
+            DropDetailText.Text = "支持多个文件，输出保存在原目录（Beta）";
+        }
+    }
+
+    private string GetIdleStatusMessage() =>
+        _mode == WorkMode.Pack
+            ? "可以拖放多个 .fla 文件，也可以点击选择文件。"
+            : "可以拖放多个 .reanim.compiled 文件，也可以点击选择文件。";
+
+    private void RevertSelectionToCurrentMode()
+    {
+        foreach (object item in RootNavigation.MenuItems)
+        {
+            if (item is not NavigationViewItem viewItem)
+                continue;
+
+            bool isCurrent = string.Equals(
+                viewItem.Tag as string,
+                _mode == WorkMode.Pack ? "pack" : "unpack",
+                StringComparison.Ordinal);
+
+            if (isCurrent)
+                RootNavigation.SelectedItem = viewItem;
+        }
     }
 
     private void RootNavigation_PaneOpening(NavigationView sender, object args)

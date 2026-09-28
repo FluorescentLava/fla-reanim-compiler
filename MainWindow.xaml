@@ -18,17 +18,24 @@
                     PaneClosed="RootNavigation_PaneClosed"
                     DisplayModeChanged="RootNavigation_DisplayModeChanged"
                     Loaded="RootNavigation_Loaded"
+                    SelectionChanged="RootNavigation_SelectionChanged"
                     Background="Transparent">
 
         <NavigationView.MenuItems>
 
-            <NavigationViewItem Content="转换"
+            <NavigationViewItem Content="打包"
+                                Tag="pack"
                                 IsSelected="True">
-
                 <NavigationViewItem.Icon>
                     <FontIcon Glyph="&#xE8B7;" />
                 </NavigationViewItem.Icon>
+            </NavigationViewItem>
 
+            <NavigationViewItem Content="解包（Beta）"
+                                Tag="unpack">
+                <NavigationViewItem.Icon>
+                    <FontIcon Glyph="&#xE896;" />
+                </NavigationViewItem.Icon>
             </NavigationViewItem>
 
         </NavigationView.MenuItems>
@@ -66,14 +73,16 @@
 
                     <TextBlock Text="输入"
                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
-                    <TextBlock Grid.Column="1"
-                               Text=".fla / XFL"
+                    <TextBlock x:Name="FooterInputText"
+                               Grid.Column="1"
+                               Text=".fla"
                                TextTrimming="CharacterEllipsis"/>
 
                     <TextBlock Grid.Row="1"
                                Text="输出"
                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
-                    <TextBlock Grid.Row="1"
+                    <TextBlock x:Name="FooterOutputText"
+                               Grid.Row="1"
                                Grid.Column="1"
                                Text=".reanim.compiled"
                                TextTrimming="CharacterEllipsis"/>
@@ -127,8 +136,8 @@
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
 
-                    <TextBlock
-                        Text="批量转换并输出到原目录"
+                    <TextBlock x:Name="ModeSubtitleText"
+                        Text="把 .fla 编译为游戏可读取的 .reanim.compiled"
                         Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
 
                     <StackPanel Grid.Column="1"
@@ -167,7 +176,7 @@
                      IsOpen="False"
                      Severity="Informational"
                      Title="等待文件"
-                     Message="可以拖放多个 .fla 文件，也可以点击选择文件。">
+                     Message="可以拖放多个 .fla 或 .reanim.compiled 文件，也可以点击选择文件。">
 
                 <InfoBar.Transitions>
                     <TransitionCollection>
@@ -205,7 +214,8 @@
                             Background="{ThemeResource ControlFillColorSecondaryBrush}"
                             VerticalAlignment="Center">
 
-                        <FontIcon Glyph="&#xE8E5;"
+                        <FontIcon x:Name="DropIconGlyph"
+                                  Glyph="&#xE8E5;"
                                   FontSize="28"
                                   HorizontalAlignment="Center"
                                   VerticalAlignment="Center"
@@ -218,7 +228,7 @@
                                 Spacing="6">
 
                         <TextBlock x:Name="DropTitleText"
-                            Text="拖放 .fla 文件到这里"
+                            Text="拖放 .fla / .reanim.compiled 到这里"
                             Style="{ThemeResource SubtitleTextBlockStyle}" />
 
                         <TextBlock x:Name="DropDetailText"
