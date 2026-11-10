@@ -1,0 +1,28 @@
+{
+  "passed": true,
+  "gui_sha256": "691268C3C81B9ECA2AA8874223240A895148EC8CE565756ADE62EA0902701F47",
+  "gui_source_sha256": "FD417BB16425F39F7EACA7A98816C1A1C02BB21F0C2FFBE23D4603DECD4DD35B",
+  "pane_callback_source_sha256": "66E66C7529C6E54A8734DC432CF908DE71D80AB52608B11F33644955BBC1A6E8",
+  "xaml_sha256": "8974368BFB21D453C6E6909E9A8942BBE97B596A047303AA84079BCC6A7D0037",
+  "default_window_logical_size": [
+    960,
+    680
+  ],
+  "footer_layout_width": 184,
+  "opacity_transition_ms": 120,
+  "transition_trigger": "NavigationView.IsPaneOpen dependency-property callback; no timer or end-of-close visibility change",
+  "observed": {
+    "expanded_footer_visible": true,
+    "compact_footer_invisible": true,
+    "reopening_footer_restored": true,
+    "intermediate_opening_frames_faint": true,
+    "intermediate_closing_frames_fade_without_reflow": true,
+    "keyboard_toggle": true,
+    "all_three_modes_restore_their_own_footer": true,
+    "title_bar_default_icon_hidden": true,
+    "title_bar_caption_and_window_buttons_retained": true
+  },
+  "validation": "Native WinUI window inspection with computer-use, including intermediate transition frames and keyboard navigation. No conversion algorithm changes.",
+  "rust_tests_passed": 90,
+  "clippy_all_targets_warnings_denied": true
+}

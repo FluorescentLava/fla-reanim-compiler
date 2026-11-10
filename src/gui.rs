@@ -1,6 +1,7 @@
 #![cfg_attr(windows, windows_subsystem = "windows")]
 mod application;
 mod bootstrap;
+mod pane_footer;
 
 use fla_reanim::workflow::{self, Operation, Options};
 use naui_winui3::{
@@ -30,7 +31,11 @@ use windows::{
                 Common::COMDLG_FILTERSPEC, FOS_ALLOWMULTISELECT, FOS_FORCEFILESYSTEM,
                 FOS_PICKFOLDERS, FileOpenDialog, IFileOpenDialog, SIGDN_FILESYSPATH,
             },
-            WindowsAndMessaging::{MB_ICONERROR, MB_OK, MessageBoxW},
+            WindowsAndMessaging::{
+                GWL_EXSTYLE, GetWindowLongPtrW, MB_ICONERROR, MB_OK, MessageBoxW, SWP_FRAMECHANGED,
+                SWP_NOACTIVATE, SWP_NOMOVE, SWP_NOSIZE, SWP_NOZORDER, SetWindowLongPtrW,
+                SetWindowPos, WS_EX_DLGMODALFRAME,
+            },
         },
     },
     core::{HSTRING, Interface, Result, w},
@@ -78,6 +83,7 @@ struct Ui {
     busy: RefCell<bool>,
     operation: Cell<Operation>,
     timer: DispatcherQueueTimer,
+    _pane_footer: pane_footer::PaneFooterAnimation,
 }
 fn find<T: Interface>(page: &FrameworkElement, name: &str) -> Result<T> {
     page.FindName(&hs(name))?.cast()
@@ -91,9 +97,25 @@ impl Ui {
             XamlReader::Load(&hs(include_str!("../ui/MainWindow.xaml")))?.cast()?;
         window.SetContent(&page)?;
         let hwnd = unsafe { window.cast::<IWindowNative>()?.WindowHandle()? };
+        // Keep the native caption and controls, with no fallback application icon.
+        unsafe {
+            let style = GetWindowLongPtrW(hwnd, GWL_EXSTYLE);
+            SetWindowLongPtrW(hwnd, GWL_EXSTYLE, style | WS_EX_DLGMODALFRAME.0 as isize);
+            SetWindowPos(
+                hwnd,
+                None,
+                0,
+                0,
+                0,
+                0,
+                SWP_FRAMECHANGED | SWP_NOACTIVATE | SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER,
+            )?;
+        }
         let timer = window.DispatcherQueue()?.CreateTimer()?;
         timer.SetInterval(TimeSpan { Duration: 500_000 })?;
         let (sender, receiver) = mpsc::channel();
+        let pane_footer =
+            pane_footer::PaneFooterAnimation::new(&page.cast()?, find(&page, "FormatPanel")?)?;
         let ui = Rc::new(Self {
             pick: find(&page, "PickButton")?,
             pick_folder: find(&page, "PickFolderButton")?,
@@ -110,6 +132,7 @@ impl Ui {
             busy: RefCell::new(false),
             operation: Cell::new(Operation::Pack),
             timer,
+            _pane_footer: pane_footer,
         });
         UI.with(|s| *s.borrow_mut() = Some(ui.clone()));
         ui.bind()?;
@@ -148,18 +171,6 @@ impl Ui {
             with_ui(|ui| ui.log.SetText(&HSTRING::new()))
         }))?;
         let navigation: NavigationView = self.page.cast()?;
-        navigation.PaneClosed(&TypedEventHandler::new(|_, _| {
-            with_ui(|ui| {
-                find::<StackPanel>(&ui.page, "FormatPanel")?
-                    .SetVisibility(Xaml::Visibility::Collapsed)
-            })
-        }))?;
-        navigation.PaneOpening(&TypedEventHandler::new(|_, _| {
-            with_ui(|ui| {
-                find::<StackPanel>(&ui.page, "FormatPanel")?
-                    .SetVisibility(Xaml::Visibility::Visible)
-            })
-        }))?;
         navigation.SelectionChanged(&TypedEventHandler::new(
             |_, args: windows_core::Ref<NavigationViewSelectionChangedEventArgs>| {
                 with_ui(|ui| {

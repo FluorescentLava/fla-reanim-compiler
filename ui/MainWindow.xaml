@@ -6,11 +6,15 @@
   <NavigationViewItem x:Name="UnpackItem" Content="解包（逆向）" Tag="unpack"><NavigationViewItem.Icon><FontIcon Glyph="&#xE896;"/></NavigationViewItem.Icon></NavigationViewItem>
   <NavigationViewItem x:Name="TvItem" Content="TV → PC" Tag="tv"><NavigationViewItem.Icon><FontIcon Glyph="&#xE8AB;"/></NavigationViewItem.Icon></NavigationViewItem>
  </NavigationView.MenuItems>
- <NavigationView.PaneFooter><StackPanel x:Name="FormatPanel" Margin="18,0,18,24" Spacing="8">
+ <NavigationView.PaneFooter>
+  <!-- Match the native pane's 120 ms transition without reflowing the text. -->
+  <StackPanel x:Name="FormatPanel" Width="184" HorizontalAlignment="Left" Margin="18,0,18,24" Spacing="8" IsHitTestVisible="False">
+   <StackPanel.OpacityTransition><ScalarTransition Duration="0:0:0.12"/></StackPanel.OpacityTransition>
   <TextBlock Text="格式" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
   <TextBlock x:Name="FormatText" Text="FLA → reanim.compiled" TextWrapping="Wrap"/>
   <TextBlock x:Name="FormatDetail" Text="经典动画 · 分组 · 骨骼" TextWrapping="Wrap" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
- </StackPanel></NavigationView.PaneFooter>
+  </StackPanel>
+ </NavigationView.PaneFooter>
  <Grid Padding="32,24" RowSpacing="18" Background="{ThemeResource LayerFillColorDefaultBrush}">
   <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
   <StackPanel Spacing="8"><TextBlock Text="FLA Reanim Compiler" Style="{ThemeResource TitleTextBlockStyle}"/>
