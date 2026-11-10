@@ -1,0 +1,493 @@
+{
+  "schema": 1,
+  "method": "Native normal compile of original FLA without recovery metadata; compare with independently parsed stock JSFL .reanim output",
+  "native_cli_sha256": "91279932c35755c71fdae9f04af662578d7d9b943e9fe9c2f6d2f99ecf0b4005",
+  "resource_manifest_sha256": "129aead53641dce2104cae10735ceb382c36d585e18baa7df0179ec1ef7cafc1",
+  "numeric_delta_note": "Angles compare modulo 360. Numeric differences are reported, not hidden by structural equivalence. No claim of bitwise or rendered-pixel equivalence.",
+  "cases": [
+    {
+      "case": "Blover",
+      "sources": {
+        "fla": {
+          "description": "Adobe Animate 24 ZIP save of GOTY/reanim/Blover.fla",
+          "sha256": "e72fd6c6018e6f42d436fb7c8a586aad7961da571124400a3597885627fa0b5d"
+        },
+        "reanim": {
+          "description": "GOTY/reanim/Blover.reanim",
+          "sha256": "d28935c2b4d7c0e9f4283aeb0cc5e7b54216e79c9ff162bef5d43f0e54a7121f"
+        }
+      },
+      "recovery_metadata_present": false,
+      "expected_tracks": 11,
+      "actual_tracks": 11,
+      "expected_frames": 62,
+      "actual_frames": 62,
+      "track_order_equal": true,
+      "fps_equal": true,
+      "mismatches": {
+        "frame_count": 0,
+        "visibility": 0,
+        "image": 0,
+        "font": 0,
+        "text": 0
+      },
+      "structure_and_resources_equal": true,
+      "compared_active_track_frames": 559,
+      "maximum_parameter_delta": {
+        "x": 0.4,
+        "y": 0.4,
+        "kx": 0.3,
+        "ky": 0.3,
+        "sx": 0.002,
+        "sy": 0.002,
+        "f": 0.0,
+        "a": 0.0
+      },
+      "worst_parameter_samples": {
+        "x": {
+          "track": "Blover_petals",
+          "frame": 50,
+          "native": -6.2,
+          "stock": -5.8
+        },
+        "y": {
+          "track": "Blover_petals",
+          "frame": 54,
+          "native": -8.3,
+          "stock": -7.9
+        },
+        "kx": {
+          "track": "Blover_stem2",
+          "frame": 3,
+          "native": -4.7,
+          "stock": -4.4
+        },
+        "ky": {
+          "track": "Blover_dirt_back",
+          "frame": 34,
+          "native": -2.2,
+          "stock": -1.9
+        },
+        "sx": {
+          "track": "Blover_stem2",
+          "frame": 22,
+          "native": 0.797,
+          "stock": 0.795
+        },
+        "sy": {
+          "track": "Blover_stem2",
+          "frame": 7,
+          "native": 1.024,
+          "stock": 1.022
+        },
+        "f": null,
+        "a": null
+      }
+    },
+    {
+      "case": "Chomper",
+      "sources": {
+        "fla": {
+          "description": "Adobe Animate 24 ZIP save of GOTY/reanim/Chomper.fla",
+          "sha256": "7ba914cd5a82cc89a3e38b72a8defa66dfe8a7b693609df95ebb24fb3805eca3"
+        },
+        "reanim": {
+          "description": "GOTY/reanim/Chomper.reanim",
+          "sha256": "a6a0ea24fcc2403d3a1fbc9bd29b6b13a9053154684d5bd0a4ad2e01abeba598"
+        }
+      },
+      "recovery_metadata_present": false,
+      "expected_tracks": 30,
+      "actual_tracks": 30,
+      "expected_frames": 94,
+      "actual_frames": 94,
+      "track_order_equal": true,
+      "fps_equal": true,
+      "mismatches": {
+        "frame_count": 0,
+        "visibility": 0,
+        "image": 0,
+        "font": 0,
+        "text": 0
+      },
+      "structure_and_resources_equal": true,
+      "compared_active_track_frames": 2254,
+      "maximum_parameter_delta": {
+        "x": 0.4,
+        "y": 0.3,
+        "kx": 0.3,
+        "ky": 0.3,
+        "sx": 0.003,
+        "sy": 0.002,
+        "f": 0.0,
+        "a": 0.0
+      },
+      "worst_parameter_samples": {
+        "x": {
+          "track": "Chomper_underjaw",
+          "frame": 31,
+          "native": -1.5,
+          "stock": -1.1
+        },
+        "y": {
+          "track": "Chomper_spike4",
+          "frame": 22,
+          "native": -8.8,
+          "stock": -8.5
+        },
+        "kx": {
+          "track": "Chomper_groundleaf4",
+          "frame": 13,
+          "native": -11.2,
+          "stock": -10.9
+        },
+        "ky": {
+          "track": "Chomper_groundleaf4",
+          "frame": 13,
+          "native": -11.2,
+          "stock": -10.9
+        },
+        "sx": {
+          "track": "Chomper_tongue",
+          "frame": 40,
+          "native": 1.618,
+          "stock": 1.615
+        },
+        "sy": {
+          "track": "Chomper_stem2",
+          "frame": 32,
+          "native": 0.787,
+          "stock": 0.785
+        },
+        "f": null,
+        "a": null
+      }
+    },
+    {
+      "case": "Zombie",
+      "sources": {
+        "fla": {
+          "description": "Adobe Animate 24 ZIP save of GOTY/reanim/Zombie.fla",
+          "sha256": "77035afad79df6887158aee6c5814cefe372c5a4436e3c64eb4c361a35dc43fe"
+        },
+        "reanim": {
+          "description": "GOTY/reanim/Zombie.reanim",
+          "sha256": "e8ab9b719bd4262f6914cd6184a42d4a85ffe0804429f4dcdb73d0bd7863cd76"
+        }
+      },
+      "recovery_metadata_present": false,
+      "expected_tracks": 42,
+      "actual_tracks": 42,
+      "expected_frames": 504,
+      "actual_frames": 504,
+      "track_order_equal": true,
+      "fps_equal": true,
+      "mismatches": {
+        "frame_count": 0,
+        "visibility": 0,
+        "image": 0,
+        "font": 0,
+        "text": 0
+      },
+      "structure_and_resources_equal": true,
+      "compared_active_track_frames": 10684,
+      "maximum_parameter_delta": {
+        "x": 0.4,
+        "y": 0.4,
+        "kx": 0.3,
+        "ky": 0.3,
+        "sx": 0.002,
+        "sy": 0.002,
+        "f": 0.0,
+        "a": 0.0
+      },
+      "worst_parameter_samples": {
+        "x": {
+          "track": "Zombie_body",
+          "frame": 241,
+          "native": -41.2,
+          "stock": -40.8
+        },
+        "y": {
+          "track": "anim_cone",
+          "frame": 142,
+          "native": -20.1,
+          "stock": -19.7
+        },
+        "kx": {
+          "track": "Zombie_innerarm_screendoor",
+          "frame": 58,
+          "native": -2.7,
+          "stock": -2.4
+        },
+        "ky": {
+          "track": "Zombie_innerarm_screendoor",
+          "frame": 67,
+          "native": -18.0,
+          "stock": -17.7
+        },
+        "sx": {
+          "track": "anim_innerarm3",
+          "frame": 73,
+          "native": 0.791,
+          "stock": 0.789
+        },
+        "sy": {
+          "track": "anim_innerarm3",
+          "frame": 73,
+          "native": 0.791,
+          "stock": 0.789
+        },
+        "f": null,
+        "a": null
+      }
+    },
+    {
+      "case": "Zombie_boss",
+      "sources": {
+        "fla": {
+          "description": "Adobe Animate 24 ZIP save of GOTY/reanim/Zombie_boss.fla",
+          "sha256": "a75681df0d1423d07a59e794e60e140e89f2b45878022a46a30fb219844fa9f8"
+        },
+        "reanim": {
+          "description": "GOTY/reanim/Zombie_boss.reanim",
+          "sha256": "3285cf7d0f77c481013d22e47becd790e8d3918ea18822c16e14d92444ba2182"
+        }
+      },
+      "recovery_metadata_present": false,
+      "expected_tracks": 72,
+      "actual_tracks": 72,
+      "expected_frames": 792,
+      "actual_frames": 792,
+      "track_order_equal": true,
+      "fps_equal": true,
+      "mismatches": {
+        "frame_count": 0,
+        "visibility": 0,
+        "image": 0,
+        "font": 0,
+        "text": 0
+      },
+      "structure_and_resources_equal": true,
+      "compared_active_track_frames": 14455,
+      "maximum_parameter_delta": {
+        "x": 0.7,
+        "y": 0.8,
+        "kx": 0.3,
+        "ky": 0.3,
+        "sx": 0.002,
+        "sy": 0.002,
+        "f": 0.0,
+        "a": 0.005
+      },
+      "worst_parameter_samples": {
+        "x": {
+          "track": "boss_body1",
+          "frame": 660,
+          "native": 577.2,
+          "stock": 577.9
+        },
+        "y": {
+          "track": "boss_body1",
+          "frame": 662,
+          "native": -481.8,
+          "stock": -481.0
+        },
+        "kx": {
+          "track": "Boss_innerarm_lower",
+          "frame": 315,
+          "native": -2.0,
+          "stock": -1.7
+        },
+        "ky": {
+          "track": "Boss_innerarm_lower",
+          "frame": 315,
+          "native": -2.0,
+          "stock": -1.7
+        },
+        "sx": {
+          "track": "Boss_innerarm_bits",
+          "frame": 665,
+          "native": 0.793,
+          "stock": 0.791
+        },
+        "sy": {
+          "track": "Boss_innerarm_bits",
+          "frame": 660,
+          "native": 0.892,
+          "stock": 0.89
+        },
+        "f": null,
+        "a": {
+          "track": "Boss_eyeglow_red",
+          "frame": 404,
+          "native": 0.125,
+          "stock": 0.13
+        }
+      }
+    },
+    {
+      "case": "Zombie_polevaulter",
+      "sources": {
+        "fla": {
+          "description": "Adobe Animate 24 ZIP save of GOTY/reanim/Zombie_polevaulter.fla",
+          "sha256": "ce43456da49ffb22be37eeac9ae1139055ca2d9b64cfe989362b37a15ccd34d2"
+        },
+        "reanim": {
+          "description": "GOTY/reanim/Zombie_polevaulter.reanim",
+          "sha256": "782409c3ea25b428e082bf1fe3f4c32a57265f970642e680f72acdc2ca2f0c3d"
+        }
+      },
+      "recovery_metadata_present": false,
+      "expected_tracks": 28,
+      "actual_tracks": 28,
+      "expected_frames": 193,
+      "actual_frames": 193,
+      "track_order_equal": true,
+      "fps_equal": true,
+      "mismatches": {
+        "frame_count": 0,
+        "visibility": 0,
+        "image": 0,
+        "font": 0,
+        "text": 0
+      },
+      "structure_and_resources_equal": true,
+      "compared_active_track_frames": 3979,
+      "maximum_parameter_delta": {
+        "x": 0.5,
+        "y": 1.0,
+        "kx": 0.3,
+        "ky": 0.3,
+        "sx": 0.002,
+        "sy": 0.003,
+        "f": 0.0,
+        "a": 0.003
+      },
+      "worst_parameter_samples": {
+        "x": {
+          "track": "Zombie_polevaulter_innerleg_upper",
+          "frame": 67,
+          "native": 1.8,
+          "stock": 2.3
+        },
+        "y": {
+          "track": "Zombie_polevaulter_outerleg_foot",
+          "frame": 85,
+          "native": 108.9,
+          "stock": 109.9
+        },
+        "kx": {
+          "track": "Zombie_polevaulter_pole2",
+          "frame": 9,
+          "native": -2.7,
+          "stock": -2.4
+        },
+        "ky": {
+          "track": "Zombie_polevaulter_pole2",
+          "frame": 9,
+          "native": -2.7,
+          "stock": -2.4
+        },
+        "sx": {
+          "track": "Zombie_polevaulter_pole2",
+          "frame": 53,
+          "native": 1.116,
+          "stock": 1.114
+        },
+        "sy": {
+          "track": "Zombie_polevaulter_innerleg_upper",
+          "frame": 69,
+          "native": 1.538,
+          "stock": 1.535
+        },
+        "f": null,
+        "a": {
+          "track": "Zombie_polevaulter_pole2",
+          "frame": 83,
+          "native": 0.667,
+          "stock": 0.67
+        }
+      }
+    },
+    {
+      "case": "SelectorScreen",
+      "sources": {
+        "fla": {
+          "description": "Adobe Animate 24 ZIP save of GOTY/reanim/SelectorScreen.fla",
+          "sha256": "bd142de6ffd5c073e16cd3eab45eb68a986621244bc3344b7b05ca5f399dc2d4"
+        },
+        "reanim": {
+          "description": "GOTY/reanim/SelectorScreen.reanim",
+          "sha256": "1b5da5a2a43174421e113c3a59017ef8c303beb8d28507a80eb384f99e76ac65"
+        }
+      },
+      "recovery_metadata_present": false,
+      "expected_tracks": 48,
+      "actual_tracks": 48,
+      "expected_frames": 706,
+      "actual_frames": 706,
+      "track_order_equal": true,
+      "fps_equal": true,
+      "mismatches": {
+        "frame_count": 0,
+        "visibility": 0,
+        "image": 0,
+        "font": 0,
+        "text": 0
+      },
+      "structure_and_resources_equal": true,
+      "compared_active_track_frames": 2841,
+      "maximum_parameter_delta": {
+        "x": 0.7,
+        "y": 0.8,
+        "kx": 0.3,
+        "ky": 0.3,
+        "sx": 0.003,
+        "sy": 0.003,
+        "f": 0.0,
+        "a": 0.0
+      },
+      "worst_parameter_samples": {
+        "x": {
+          "track": "Cloud1",
+          "frame": 330,
+          "native": -303.8,
+          "stock": -303.1
+        },
+        "y": {
+          "track": "Cloud5",
+          "frame": 685,
+          "native": 214.9,
+          "stock": 214.1
+        },
+        "kx": {
+          "track": "Cloud1",
+          "frame": 319,
+          "native": -0.5,
+          "stock": -0.2
+        },
+        "ky": {
+          "track": "Cloud1",
+          "frame": 319,
+          "native": -0.5,
+          "stock": -0.2
+        },
+        "sx": {
+          "track": "Cloud1",
+          "frame": 209,
+          "native": 1.252,
+          "stock": 1.249
+        },
+        "sy": {
+          "track": "Cloud1",
+          "frame": 209,
+          "native": 1.252,
+          "stock": 1.249
+        },
+        "f": null,
+        "a": null
+      }
+    }
+  ]
+}
