@@ -34,11 +34,8 @@ if ($actualHash -ne $expectedSha256) {
 
 Add-Type -AssemblyName System.IO.Compression.FileSystem
 New-Item -ItemType Directory -Path $destination -Force | Out-Null
-$licenseDirectory = Join-Path $destination 'Licenses'
-New-Item -ItemType Directory -Path $licenseDirectory -Force | Out-Null
 $entries = @{
     'runtimes/win-x64/native/Microsoft.WindowsAppRuntime.Bootstrap.dll' = (Join-Path $destination 'Microsoft.WindowsAppRuntime.Bootstrap.dll')
-    'license.txt' = (Join-Path $licenseDirectory 'Microsoft.WindowsAppSDK.Foundation.txt')
 }
 $archive = [IO.Compression.ZipFile]::OpenRead($packagePath)
 try {
@@ -47,6 +44,7 @@ try {
         if ($null -eq $entry) { throw "Missing bootstrap package entry: $entryName" }
         [IO.Compression.ZipFileExtensions]::ExtractToFile($entry, $entries[$entryName], $true)
     }
+
 }
 finally { $archive.Dispose() }
 

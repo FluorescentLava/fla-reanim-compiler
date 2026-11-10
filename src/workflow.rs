@@ -1,4 +1,4 @@
-use crate::{codec, forward, plus, reverse};
+use crate::{codec, forward, plus, reverse, tv};
 use anyhow::{Context, Result, bail, ensure};
 use serde::Serialize;
 use std::{
@@ -7,8 +7,18 @@ use std::{
     time::Instant,
 };
 
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub enum Operation {
+    #[default]
+    Auto,
+    Pack,
+    Unpack,
+    TvToPc,
+}
+
 #[derive(Clone, Default)]
 pub struct Options {
+    pub operation: Operation,
     pub output: Option<PathBuf>,
     pub resource_root: Option<PathBuf>,
     pub plus: bool,
@@ -38,14 +48,68 @@ pub fn default_output(input: &Path) -> PathBuf {
         input.with_extension("reanim.compiled")
     }
 }
+
+pub fn tv_output(input: &Path) -> PathBuf {
+    let name = input.file_name().unwrap_or_default().to_string_lossy();
+    let lower = name.to_ascii_lowercase();
+    let length = if lower.ends_with(".reanim.compiled") {
+        name.len() - ".reanim.compiled".len()
+    } else if lower.ends_with(".compiled") {
+        name.len() - ".compiled".len()
+    } else {
+        name.len()
+    };
+    input.with_file_name(format!("{}_pc.reanim.compiled", &name[..length]))
+}
+
+/// TV folders use the same nonrecursive batch selection as the old script.
+/// A selected output directory preserves input filenames; otherwise each file
+/// receives the safe `_pc` suffix next to its input.
+pub fn expand_inputs(input: &Path, options: &Options) -> Result<Vec<(PathBuf, Options)>> {
+    if options.operation != Operation::TvToPc || !input.is_dir() {
+        return Ok(vec![(input.to_owned(), options.clone())]);
+    }
+    if let Some(output) = &options.output {
+        ensure!(!output.is_file(), "批量转换的输出路径必须是文件夹");
+    }
+    let mut inputs = Vec::new();
+    for entry in fs::read_dir(input)? {
+        let entry = entry?;
+        let path = entry.path();
+        if entry.file_type()?.is_file()
+            && path
+                .extension()
+                .is_some_and(|e| e.eq_ignore_ascii_case("compiled"))
+        {
+            inputs.push(path);
+        }
+    }
+    inputs.sort();
+    ensure!(!inputs.is_empty(), "文件夹中没有 .compiled 动画文件");
+    Ok(inputs
+        .into_iter()
+        .map(|input| {
+            let mut settings = options.clone();
+            settings.output = options
+                .output
+                .as_ref()
+                .map(|root| root.join(input.file_name().expect("directory entry has a filename")));
+            (input, settings)
+        })
+        .collect())
+}
+
 pub fn convert(input: &Path, options: &Options) -> Result<Report> {
     let start = Instant::now();
     let input =
         fs::canonicalize(input).with_context(|| format!("找不到输入 {}", input.display()))?;
-    let output = options
-        .output
-        .clone()
-        .unwrap_or_else(|| default_output(&input));
+    let output = options.output.clone().unwrap_or_else(|| {
+        if options.operation == Operation::TvToPc {
+            tv_output(&input)
+        } else {
+            default_output(&input)
+        }
+    });
     let output = std::path::absolute(output)?;
     ensure!(output != input, "输出路径不能与输入相同");
     if output.exists() {
@@ -70,6 +134,26 @@ pub fn convert(input: &Path, options: &Options) -> Result<Report> {
     let compiled = input
         .extension()
         .is_some_and(|e| e.eq_ignore_ascii_case("compiled"));
+    match options.operation {
+        Operation::Pack => ensure!(!compiled, "请在“解包（逆向）”页面选择 compiled 文件"),
+        Operation::Unpack => ensure!(compiled, "解包需要 .reanim.compiled 文件"),
+        Operation::Auto | Operation::TvToPc => {}
+    }
+    if options.operation == Operation::TvToPc {
+        let (bytes, summary) = tv::convert_with_summary(&fs::read(&input)?)?;
+        fs::write(&staged, bytes)?;
+        fs::rename(staged, &output)?;
+        return Ok(Report {
+            input,
+            bytes: fs::metadata(&output)?.len(),
+            output,
+            tracks: summary.tracks,
+            frames: summary.frames,
+            fps: summary.fps,
+            seconds: start.elapsed().as_secs_f64(),
+            detail: "TV → PC 动画转换完成".into(),
+        });
+    }
     let (definition, detail) = if compiled {
         let bytes = fs::read(&input)?;
         let definition = codec::decode(&bytes)?;
@@ -184,6 +268,7 @@ pub fn cli(args: impl IntoIterator<Item = String>) -> Result<()> {
     let mut args = args.into_iter();
     while let Some(arg) = args.next() {
         match arg.as_str() {
+            "--tv-to-pc" => options.operation = Operation::TvToPc,
             "--plus" => options.plus = true,
             "--link" => options.link = true,
             "--force" => options.force = true,
@@ -207,7 +292,7 @@ pub fn cli(args: impl IntoIterator<Item = String>) -> Result<()> {
             }
             "--help" | "-h" => {
                 println!(
-                    "FlaReanimCompiler [--plus] [--strict-tweens] [--stage WIDTHxHEIGHT] [--force] [--resource-root DIR] [-o FILE] FILE...\n--stage: override reverse authoring stage; stock sizes come from GOTY FLA measurements\n--strict-tweens: tighter reverse curve tolerance, with more keyframes\n--inspect: summary; --dump: raw definition JSON; --verify: check unchanged-source exact recovery\nNo .NET/Python required. GUI uses installed Windows App Runtime."
+                    "FlaReanimCompiler [--plus] [--strict-tweens] [--stage WIDTHxHEIGHT] [--force] [--resource-root DIR] [-o FILE] FILE...\nFlaReanimCompiler --tv-to-pc [-o FILE_OR_DIRECTORY] TV_FILE_OR_DIRECTORY...\n--stage: override reverse authoring stage; stock sizes come from GOTY FLA measurements\n--strict-tweens: tighter reverse curve tolerance, with more keyframes\n--tv-to-pc: convert TV animation layout to PC; folders are processed as a batch\n--inspect: summary; --dump: raw definition JSON; --verify: check unchanged-source exact recovery\nNo .NET/Python required. GUI uses installed Windows App Runtime."
                 );
                 return Ok(());
             }
@@ -223,8 +308,24 @@ pub fn cli(args: impl IntoIterator<Item = String>) -> Result<()> {
         options.output.is_none() || paths.len() == 1,
         "--output 只能用于一个输入文件"
     );
+    if options.operation == Operation::TvToPc {
+        ensure!(
+            !options.plus
+                && !options.strict_tweens
+                && options.stage.is_none()
+                && !options.link
+                && !inspect
+                && !dump
+                && !verify,
+            "--tv-to-pc 不与打包、解包或检查选项组合使用"
+        );
+    }
+    let mut jobs = Vec::new();
+    for path in paths {
+        jobs.extend(expand_inputs(&path, &options)?);
+    }
     let mut failed = 0;
-    for input in paths {
+    for (input, options) in jobs {
         let result = (|| -> Result<()> {
             if inspect || dump {
                 let d = codec::decode(&fs::read(&input)?)?;

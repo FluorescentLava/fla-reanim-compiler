@@ -4,6 +4,7 @@ pub mod image_io;
 pub mod plus;
 pub mod reverse;
 pub mod stage;
+pub mod tv;
 pub mod tween;
 pub mod workflow;
 

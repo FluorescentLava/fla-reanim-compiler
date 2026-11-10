@@ -1,8 +1,8 @@
 # FLA Reanim Compiler
 
-纯 Rust 的双向动画转换器，界面使用原生 WinUI 3。经典编译、增强编译、逆向、位图解码和矢量栅格化直接运行在同一程序中。
+纯 Rust 的动画转换器，界面使用原生 WinUI 3。经典编译、增强编译、逆向、TV → PC、位图解码和矢量栅格化直接运行在同一程序中。
 
-双击 `FlaReanimCompiler.exe`，拖入多个 `.fla` / `.reanim.compiled`，或点击“选择文件”。转换后的文件写在输入旁边；已有输出不会自动覆盖。命令行可通过 `--output` 指定新路径，或显式 `--force` 替换输出。
+双击 `FlaReanimCompiler.exe`，先在侧边栏选择功能，再拖入文件或点击“选择文件”。“打包”只显示“增强编译”；“解包（逆向）”只显示“精确采样”，经典或增强格式由文件自动识别。“TV → PC”没有这些选项，支持多文件及文件夹批量转换。转换后的文件写在输入旁边；已有输出不会自动覆盖。命令行可通过 `--output` 指定新路径，或显式 `--force` 替换输出。
 
 ```powershell
 fla-reanim-cli.exe Character.fla
@@ -12,9 +12,13 @@ fla-reanim-cli.exe --strict-tweens Character.reanim.compiled --output C:\Work\Ch
 fla-reanim-cli.exe --stage 320x180 Custom.reanim.compiled --output C:\Work\Custom.fla
 fla-reanim-cli.exe --inspect Character.reanim.compiled
 fla-reanim-cli.exe --verify Character.reanim.compiled --resource-root C:\Game\Resources
+fla-reanim-cli.exe --tv-to-pc Blover.reanim.compiled
+fla-reanim-cli.exe --tv-to-pc C:\TV\reanim --output C:\PC\reanim
 ```
 
 程序不需要 .NET、Python、resvg-py 或 VC++ Redistributable。GUI 使用系统安装的 **x64 Windows App Runtime 2.3.1 或兼容的更新 2.x 版本**，发行包只附微软官方的约 385 KiB bootstrap DLL。Windows 不保证预装此 runtime；缺少时，官方引导程序显示获取 runtime 的提示，用户完成安装后重新打开。提示不会静默安装。命令行转换在 WinUI 初始化前执行，可以在没有 Windows App Runtime 的环境使用。
+
+TV → PC 会把 TV 的 20 字节轨道头、48 字节帧和每帧六个字符串重写为 PC 的 12 字节轨道头、44 字节帧和三个字符串，并写入游戏要求的 `0xB393B4C0` schema。八个浮点字段和 image/font/text 的原始字节全部保留；TV 专有的 iPath/i2/i2Path 无 PC 对应字段，会丢弃。支持标准 zlib 容器和裸 TV 数据，校验长度、标记及尾随数据，PC 输入会明确报错。默认输出 `名称_pc.reanim.compiled`；目录批量只处理第一层 `.compiled` 文件，显式输出目录时保留原文件名。贴图仍需按 image ID 在游戏资源表中登记。
 
 经典模式输出游戏的 `0xDEADFED4` + zlib + `0xB393B4C0` DefMap 格式，支持原版单 run 静态文字、字体 URL 覆盖和 `attacher__` 指令。增强模式保留文件夹、DOMGroup、嵌套符号、父子骨骼、枢轴和 `betweenFrameMatrixList` 烘焙 IK 姿态，并把图片写在 compiled 旁边；游戏由 `ReanimPlusAnimation` 读取兼容的 RPLS v1 扩展。IK 或实际可见矢量自动使用增强模式。纯色矢量及描边由 Rust resvg 栅格化；增强模式的文本、遮罩、渐变和缺少烘焙姿态的 IK 继续给出具体错误。
 
@@ -45,7 +49,7 @@ gameRoot/tools/fla_to_compiled/
   FlaReanimCompiler.exe
   fla-reanim-cli.exe
   Microsoft.WindowsAppRuntime.Bootstrap.dll
-  README.md / LICENSE / Licenses/
+  README.md
   FLA-Reanim-Compiler-win-x64.zip
   release-manifest.json
   src/                         独立源码仓库根目录
@@ -65,7 +69,7 @@ cargo clippy --all-targets --locked -- -D warnings
 pwsh -File Packaging/BuildRelease.ps1
 ```
 
-默认发布到源码仓库的父目录，也就是游戏中的 `tools/fla_to_compiled`。EXE、bootstrap DLL、精简发行 README、许可证、ZIP 和 `release-manifest.json` 都位于该输出目录；源码 README 与 QA 留在内层仓库。打包时仅枚举独立临时 staging 中的发行文件，输出目录中的 `src`、`.git` 和 QA 不会进入 ZIP。清单记录源码仓库、提交、工作区是否有改动以及二进制 SHA-256；从不含 Git 信息的源码包构建时，提交和工作区状态为 `null`。
+默认发布到源码仓库的父目录，也就是游戏中的 `tools/fla_to_compiled`。EXE、bootstrap DLL、精简发行 README、ZIP 和 `release-manifest.json` 都位于该输出目录；源码 README 与 QA 留在内层仓库。发布包不输出独立的 LICENSE、Licenses 或声明文件，也不向 EXE 嵌入声明。打包时仅枚举独立临时 staging 中的发行文件，输出目录中的 `src`、`.git` 和 QA 不会进入 ZIP。清单记录源码仓库、提交、工作区是否有改动以及二进制 SHA-256；从不含 Git 信息的源码包构建时，提交和工作区状态为 `null`。
 
 可显式覆盖输出目录；相对路径从源码仓库根目录解析，CI 使用同样的命令：
 
@@ -73,4 +77,4 @@ pwsh -File Packaging/BuildRelease.ps1
 pwsh -File Packaging/BuildRelease.ps1 -DestinationDirectory dist/win-x64
 ```
 
-此时 ZIP 与清单也在 `dist/win-x64` 内。已有 Release 缓存可加 `-SkipBuild`，缓存位置沿用 `CARGO_TARGET_DIR`，未设置时使用仓库内 `target`。脚本验证 x64 原生 PE、无 CLR/.NET apphost、无外置 C/C++ runtime 导入和无捆绑 WinUI runtime，并包含依赖许可证。性能与兼容性实测、旧版恢复方法见 [benchmarks/README.md](benchmarks/README.md)。Python 只用于独立测试和历史基线，发布程序不会调用它。
+此时 ZIP 与清单也在 `dist/win-x64` 内。已有 Release 缓存可加 `-SkipBuild`，缓存位置沿用 `CARGO_TARGET_DIR`，未设置时使用仓库内 `target`。脚本验证 x64 原生 PE、无 CLR/.NET apphost、无外置 C/C++ runtime 导入和无捆绑 WinUI runtime。性能与兼容性实测、旧版恢复方法见 [benchmarks/README.md](benchmarks/README.md)。Python 只用于独立测试和历史基线，发布程序不会调用它。

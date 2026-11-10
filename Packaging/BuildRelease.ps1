@@ -14,10 +14,52 @@ if ($destination.TrimEnd('\', '/') -eq $projectRoot.TrimEnd('\', '/')) {
 $cargo = Join-Path $env:USERPROFILE '.cargo\bin\cargo.exe'
 if (Get-Command cargo -ErrorAction SilentlyContinue) { $cargo = (Get-Command cargo).Source }
 . (Join-Path $PSScriptRoot 'AssertNative.ps1')
+
+function Remove-PublishedLicenses([string]$OutputDirectory) {
+    $output = [IO.Path]::GetFullPath($OutputDirectory).TrimEnd('\', '/')
+    $ancestor = Get-Item -LiteralPath $output -Force
+    while ($null -ne $ancestor) {
+        if ($ancestor.Attributes -band [IO.FileAttributes]::ReparsePoint) { throw 'Release cleanup does not follow directory links.' }
+        $ancestor = $ancestor.Parent
+    }
+    foreach ($name in @('LICENSE', 'Licenses')) {
+        $target = [IO.Path]::GetFullPath((Join-Path $output $name))
+        if ([IO.Path]::GetDirectoryName($target) -ne $output -or [IO.Path]::GetFileName($target) -ne $name -or $target -eq $projectRoot) {
+            throw 'Refusing to remove an unexpected release license path.'
+        }
+        if (-not (Test-Path -LiteralPath $target)) { continue }
+        $entry = Get-Item -LiteralPath $target -Force
+        if ($entry.Attributes -band [IO.FileAttributes]::ReparsePoint) { throw 'Release cleanup does not follow license links.' }
+        if ($name -eq 'LICENSE') {
+            if ($entry.PSIsContainer) { throw 'Expected the old LICENSE to be a file.' }
+            Remove-Item -LiteralPath $target -Force
+        }
+        else {
+            if (-not $entry.PSIsContainer) { throw 'Expected the old Licenses to be a directory.' }
+            $pending = [Collections.Generic.Stack[string]]::new()
+            $pending.Push($target)
+            while ($pending.Count) {
+                foreach ($child in Get-ChildItem -LiteralPath $pending.Pop() -Force) {
+                    $childPath = [IO.Path]::GetFullPath($child.FullName)
+                    if (-not $childPath.StartsWith($target + '\', [StringComparison]::OrdinalIgnoreCase) -or
+                        ($child.Attributes -band [IO.FileAttributes]::ReparsePoint)) {
+                        throw 'Refusing recursive license cleanup outside the verified directory or through a link.'
+                    }
+                    if ($child.PSIsContainer) { $pending.Push($childPath) }
+                }
+            }
+            Remove-Item -LiteralPath $target -Recurse -Force
+        }
+    }
+}
+
 $temporaryRoot = [IO.Path]::GetFullPath([IO.Path]::GetTempPath()).TrimEnd('\', '/')
 $staging = Join-Path $temporaryRoot ('fla-reanim-release-' + [Guid]::NewGuid().ToString('N'))
+$payloadDirectory = Join-Path $staging 'payload'
 Push-Location $projectRoot
 try {
+    New-Item -ItemType Directory -Path $payloadDirectory -Force | Out-Null
+    & (Join-Path $PSScriptRoot 'PrepareBootstrap.ps1') -DestinationDirectory $payloadDirectory | Out-Null
     if (-not $SkipBuild) {
         & $cargo build --release --locked --bins
         if ($LASTEXITCODE -ne 0) { throw 'Rust release build failed.' }
@@ -29,39 +71,21 @@ try {
     $cliImports = @(Assert-NativeExecutable $cli)
     # The default output contains the independent src repository. Assemble and
     # enumerate only an owned staging directory, never the output directory.
-    New-Item -ItemType Directory -Path $staging | Out-Null
-    Copy-Item -LiteralPath $executable -Destination $staging
-    Copy-Item -LiteralPath $cli -Destination $staging
-    Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'README-release.md') -Destination (Join-Path $staging 'README.md')
-    Copy-Item -LiteralPath (Join-Path $projectRoot 'LICENSE') -Destination $staging
-    & (Join-Path $PSScriptRoot 'PrepareBootstrap.ps1') -DestinationDirectory $staging | Out-Null
-    $licenses = Join-Path $staging 'Licenses'
-    New-Item -ItemType Directory -Path $licenses -Force | Out-Null
-    Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'naui-windows-application-MIT.txt') -Destination $licenses -Force
-    $metadata = (& $cargo metadata --locked --format-version 1 --filter-platform x86_64-pc-windows-msvc | Out-String) | ConvertFrom-Json
-    if ($LASTEXITCODE -ne 0) { throw 'Cargo metadata failed.' }
-    $notices = foreach ($package in $metadata.packages) {
-        "$($package.name) $($package.version): $($package.license) $($package.repository)"
-        $root = Split-Path -Parent $package.manifest_path
-        $files = @(Get-ChildItem -LiteralPath $root -File | Where-Object Name -match '^(LICENSE|LICENCE|COPYING|NOTICE)([.-]|$)')
-        if ($package.license_file) { $files += Get-Item -LiteralPath (Join-Path $root $package.license_file) }
-        foreach ($file in $files | Sort-Object FullName -Unique) {
-            Copy-Item -LiteralPath $file.FullName -Destination (Join-Path $licenses "$($package.name)-$($package.version)-$($file.Name)") -Force
-        }
-    }
-    $notices | Set-Content -LiteralPath (Join-Path $licenses 'Rust-dependencies.txt') -Encoding utf8
-    $files = @(Get-ChildItem -LiteralPath $staging -Recurse -File)
+    Copy-Item -LiteralPath $executable -Destination $payloadDirectory
+    Copy-Item -LiteralPath $cli -Destination $payloadDirectory
+    Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'README-release.md') -Destination (Join-Path $payloadDirectory 'README.md')
+    $files = @(Get-ChildItem -LiteralPath $payloadDirectory -File)
+    if ($files.Count -ne 4 -or @(Get-ChildItem -LiteralPath $payloadDirectory -Directory).Count) { throw 'Unexpected release payload.' }
     foreach ($file in $files) {
         if ($file.Name -match '^(coreclr|hostfxr|hostpolicy|Microsoft\.UI\.Xaml)\.dll$' -or $file.Extension -in @('.py','.cs','.winmd','.xbf')) {
             throw "Unexpected bundled runtime or legacy source: $($file.FullName)"
         }
     }
-    # ZIP cannot represent pre-1980 license timestamps from some Cargo crates.
     # Normalize only staging entries, also keeping repeated packages comparable.
-    foreach ($entry in Get-ChildItem -LiteralPath $staging -Recurse) {
+    foreach ($entry in $files) {
         $entry.LastWriteTime = [datetime]::new(1980, 1, 1)
     }
-    $payload = @(Get-ChildItem -LiteralPath $staging | Select-Object -ExpandProperty FullName)
+    $payload = @($files | Select-Object -ExpandProperty FullName)
     $zipName = 'FLA-Reanim-Compiler-win-x64.zip'
     $zipPath = Join-Path $staging $zipName
     Compress-Archive -LiteralPath $payload -DestinationPath $zipPath
@@ -82,19 +106,20 @@ try {
         SourceRepository = 'https://github.com/FluorescentLava/fla-reanim-compiler'
         SourceRevision = $sourceRevision
         SourceDirty = $sourceDirty
-        ExecutableBytes = (Get-Item -LiteralPath (Join-Path $staging 'FlaReanimCompiler.exe')).Length
+        ExecutableBytes = (Get-Item -LiteralPath (Join-Path $payloadDirectory 'FlaReanimCompiler.exe')).Length
         DistributionBytes = [int64]($files | Measure-Object Length -Sum).Sum
         ZipBytes = (Get-Item -LiteralPath $zipPath).Length
-        ExecutableSha256 = (Get-FileHash -LiteralPath (Join-Path $staging 'FlaReanimCompiler.exe')).Hash
-        CliBytes = (Get-Item -LiteralPath (Join-Path $staging 'fla-reanim-cli.exe')).Length
-        CliSha256 = (Get-FileHash -LiteralPath (Join-Path $staging 'fla-reanim-cli.exe')).Hash
+        ExecutableSha256 = (Get-FileHash -LiteralPath (Join-Path $payloadDirectory 'FlaReanimCompiler.exe')).Hash
+        CliBytes = (Get-Item -LiteralPath (Join-Path $payloadDirectory 'fla-reanim-cli.exe')).Length
+        CliSha256 = (Get-FileHash -LiteralPath (Join-Path $payloadDirectory 'fla-reanim-cli.exe')).Hash
         ZipSha256 = (Get-FileHash -LiteralPath $zipPath).Hash
         Imports = $imports -join ', '
         CliImports = $cliImports -join ', '
     } | ConvertTo-Json | Set-Content -LiteralPath $manifestPath -Encoding utf8
     New-Item -ItemType Directory -Path $destination -Force | Out-Null
+    Remove-PublishedLicenses $destination
     foreach ($file in $files) {
-        $relative = $file.FullName.Substring($staging.Length + 1)
+        $relative = $file.FullName.Substring($payloadDirectory.Length + 1)
         $target = Join-Path $destination $relative
         New-Item -ItemType Directory -Path (Split-Path -Parent $target) -Force | Out-Null
         Copy-Item -LiteralPath $file.FullName -Destination $target -Force
