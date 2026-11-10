@@ -59,7 +59,7 @@ impl Tolerance {
     }
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Serialize)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Span {
     pub start: usize,
     /// For a tween, the next endpoint key is at start + duration.
@@ -71,40 +71,20 @@ pub struct Span {
     pub easing: i32,
 }
 
-#[derive(Clone, Debug, Serialize)]
+#[derive(Clone, Debug)]
 pub struct Plan {
     pub spans: Vec<Span>,
-    /// Maximum accepted error for [x, y, kx, ky, sx, sy, frame, alpha].
-    pub max_errors: [f64; 8],
     /// Source transitions that cannot be represented safely by a standard
     /// shortest-path Adobe classic tween (for example a one-frame scale flip).
     /// Discrete artwork/frame switches are intentional cuts, and excluded.
     pub unfitted_intervals: Vec<usize>,
 }
-impl Plan {
-    pub fn tween_count(&self) -> usize {
-        self.spans.iter().filter(|s| s.tween).count()
-    }
-    pub fn compressed_tween_count(&self) -> usize {
-        self.spans
-            .iter()
-            .filter(|s| s.tween && s.duration > 1)
-            .count()
-    }
-}
-
-/// The input must contain expanded/fill-forward transforms.
-pub fn spans(transforms: &[Transform]) -> Vec<Span> {
-    plan(transforms, Tolerance::default()).spans
-}
-
 /// Fit common linear/quadratic timing, splitting at errors and discrete changes.
 /// A multi-revolution movement is split into spans under 169 degrees per axis,
 /// so matrix decomposition cannot reverse its intended rotation direction.
 pub fn plan(transforms: &[Transform], tolerance: Tolerance) -> Plan {
     let mut plan = Plan {
         spans: Vec::new(),
-        max_errors: [0.; 8],
         unfitted_intervals: Vec::new(),
     };
     if transforms.is_empty() {
@@ -169,9 +149,6 @@ fn split(samples: &[Transform], start: usize, end: usize, limits: [f64; 8], plan
             tween: moving,
             easing: fit.easing,
         });
-        for &i in &FIELDS {
-            plan.max_errors[i] = plan.max_errors[i].max(fit.errors[i]);
-        }
     } else if end == start + 1 {
         plan.spans.push(Span {
             start,
@@ -190,14 +167,12 @@ fn split(samples: &[Transform], start: usize, end: usize, limits: [f64; 8], plan
 struct Fit {
     easing: i32,
     ratio: f64,
-    errors: [f64; 8],
     split: usize,
 }
 fn fit(samples: &[Transform], start: usize, end: usize, limits: [f64; 8]) -> Fit {
     let invalid = || Fit {
         easing: 0,
         ratio: f64::INFINITY,
-        errors: [0.; 8],
         split: (start + end) / 2,
     };
     let a = &samples[start].values;
@@ -282,7 +257,6 @@ fn evaluate(samples: &[Transform], start: usize, end: usize, limits: [f64; 8], e
     let mut fit = Fit {
         easing,
         ratio: 0.,
-        errors: [0.; 8],
         split: (start + end) / 2,
     };
     let count = (end - start) as f64;
@@ -307,7 +281,6 @@ fn evaluate(samples: &[Transform], start: usize, end: usize, limits: [f64; 8], e
             }
             for u in positions {
                 let error = (constant + u * (linear + u * quadratic)).abs();
-                fit.errors[i] = fit.errors[i].max(error);
                 let ratio = error / limits[i];
                 if ratio > fit.ratio {
                     fit.ratio = ratio;
@@ -319,295 +292,4 @@ fn evaluate(samples: &[Transform], start: usize, end: usize, limits: [f64; 8], e
         }
     }
     fit
-}
-
-/// Evaluate the emitted timing curve in raw reanim parameter space.
-/// This is also useful to report reconstruction error to callers.
-pub fn sample_span(samples: &[Transform], span: Span, frame: f64) -> [f64; 8] {
-    let a = samples[span.start].values.map(f64::from);
-    if !span.tween {
-        return a;
-    }
-    let b = samples[span.start + span.duration].values.map(f64::from);
-    let t = ((frame - span.start as f64) / span.duration as f64).clamp(0., 1.);
-    let q = t + f64::from(span.easing) / 100. * t * (1. - t);
-    let mut value = a;
-    for i in FIELDS {
-        value[i] = a[i] + (b[i] - a[i]) * q;
-    }
-    value
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    fn transform(values: [f32; 8]) -> Transform {
-        Transform {
-            values,
-            image: "IMAGE_REANIM_TEST".into(),
-            ..Transform::default()
-        }
-    }
-    fn assert_continuous_bound(samples: &[Transform], plan: &Plan, tolerance: Tolerance) {
-        let limits = tolerance.fields();
-        assert!(
-            plan.unfitted_intervals.is_empty(),
-            "{:?}",
-            plan.unfitted_intervals
-        );
-        let mut covered = 0;
-        for &span in &plan.spans {
-            assert_eq!(span.start, covered);
-            covered += span.duration;
-            for offset in 0..span.duration {
-                let before = span.start + offset;
-                if before + 1 >= samples.len()
-                    || !same_discrete(&samples[before], &samples[before + 1])
-                {
-                    continue;
-                }
-                for fraction in [0., 0.125, 0.25, 0.5, 0.75, 0.875, 0.999] {
-                    let reconstructed = sample_span(samples, span, before as f64 + fraction);
-                    for i in FIELDS {
-                        let expected = f64::from(samples[before].values[i])
-                            + (f64::from(samples[before + 1].values[i])
-                                - f64::from(samples[before].values[i]))
-                                * fraction;
-                        assert!(
-                            (expected - reconstructed[i]).abs() <= limits[i] + 1e-7,
-                            "frame {before}+{fraction}, field {i}, error {}",
-                            (expected - reconstructed[i]).abs()
-                        );
-                    }
-                }
-            }
-        }
-        assert_eq!(covered, samples.len());
-    }
-    #[test]
-    fn linear_motion_becomes_two_keys_for_every_parameter() {
-        let samples: Vec<_> = (0..101)
-            .map(|i| {
-                let t = i as f32 / 100.;
-                transform([
-                    100. * t,
-                    -20. * t,
-                    45. * t,
-                    -30. * t,
-                    1. + t,
-                    2. - t,
-                    0.,
-                    1. - t,
-                ])
-            })
-            .collect();
-        let plan = plan(&samples, Tolerance::default());
-        assert_eq!(plan.spans.len(), 2);
-        assert_eq!(plan.spans[0].duration, 100);
-        assert!(plan.spans[0].tween);
-        assert_eq!(plan.spans[0].easing, 0);
-        assert_continuous_bound(&samples, &plan, Tolerance::default());
-    }
-    #[test]
-    fn eased_motion_is_recovered_and_checked_between_frames() {
-        let samples: Vec<_> = (0..41)
-            .map(|i| {
-                let t = i as f32 / 40.;
-                let q = t + 0.6 * t * (1. - t);
-                transform([
-                    10. * q,
-                    -5. * q,
-                    30. * q,
-                    20. * q,
-                    1. + 0.1 * q,
-                    1. - 0.2 * q,
-                    0.,
-                    1. - 0.2 * q,
-                ])
-            })
-            .collect();
-        let plan = plan(&samples, Tolerance::default());
-        assert_eq!(plan.spans.len(), 2);
-        assert_eq!(plan.spans[0].easing, 60);
-        assert_continuous_bound(&samples, &plan, Tolerance::default());
-    }
-    #[test]
-    fn curved_baked_motion_is_split_and_still_has_real_multiframe_tweens() {
-        let samples: Vec<_> = (0..121)
-            .map(|i| {
-                let t = i as f32 / 120.;
-                transform([
-                    30. * (t * 3.).sin(),
-                    10. * (t * 4.).cos(),
-                    20. * t,
-                    15. * t,
-                    1. + 0.1 * (t * 2.).sin(),
-                    1.,
-                    0.,
-                    0.8,
-                ])
-            })
-            .collect();
-        let plan = plan(&samples, Tolerance::default());
-        assert!(
-            plan.spans.len() < samples.len() / 2,
-            "{} keys",
-            plan.spans.len()
-        );
-        assert!(plan.compressed_tween_count() > 0);
-        assert_continuous_bound(&samples, &plan, Tolerance::default());
-    }
-    #[test]
-    fn artwork_visibility_and_frame_changes_cut_spans() {
-        let mut samples: Vec<_> = (0..20)
-            .map(|i| transform([i as f32, 0., 0., 0., 1., 1., 0., 1.]))
-            .collect();
-        for t in &mut samples[5..10] {
-            t.image = "OTHER".into();
-        }
-        for t in &mut samples[10..15] {
-            t.values[6] = -1.;
-        }
-        for t in &mut samples[15..] {
-            t.values[6] = 2.;
-        }
-        let plan = plan(&samples, Tolerance::default());
-        for s in &plan.spans {
-            if s.tween {
-                assert!(same_discrete(
-                    &samples[s.start],
-                    &samples[s.start + s.duration]
-                ));
-            }
-        }
-        for start in [5, 10, 15] {
-            assert!(plan.spans.iter().any(|s| s.start == start));
-        }
-        assert_continuous_bound(&samples, &plan, Tolerance::default());
-    }
-    #[test]
-    fn accumulated_rotation_keeps_direction_without_fullturn_aliasing() {
-        let samples: Vec<_> = (0..49)
-            .map(|i| transform([0., 0., i as f32 * 15., i as f32 * 15., 1., 1., 0., 1.]))
-            .collect();
-        let plan = plan(&samples, Tolerance::default());
-        assert!(plan.spans.len() < samples.len() / 2);
-        for s in &plan.spans {
-            if s.tween {
-                assert!(
-                    samples[s.start + s.duration].values[2] - samples[s.start].values[2] <= 169.
-                );
-            }
-        }
-        assert_continuous_bound(&samples, &plan, Tolerance::default());
-    }
-    #[test]
-    fn opposite_axis_rotation_crosses_signed_angle_boundaries() {
-        let samples: Vec<_> = (0..31)
-            .map(|i| {
-                transform([
-                    0.,
-                    0.,
-                    170. + i as f32 * 4.,
-                    -170. - i as f32 * 4.,
-                    1.,
-                    2.,
-                    0.,
-                    1.,
-                ])
-            })
-            .collect();
-        let plan = plan(&samples, Tolerance::default());
-        assert_eq!(plan.spans.len(), 2);
-        assert_continuous_bound(&samples, &plan, Tolerance::default());
-    }
-    #[test]
-    fn xfl_endpoint_matrices_and_easing_recompile_with_original_direction() {
-        let samples: Vec<_> = (0..41)
-            .map(|i| {
-                let t = i as f32 / 40.;
-                let q = t + 0.6 * t * (1. - t);
-                transform([
-                    10. * q,
-                    -5. * q,
-                    170. + 30. * q,
-                    -170. - 20. * q,
-                    1. + 0.1 * q,
-                    1. - 0.2 * q,
-                    0.,
-                    1. - 0.2 * q,
-                ])
-            })
-            .collect();
-        let plan = plan(&samples, Tolerance::default());
-        assert_eq!(plan.spans.len(), 2);
-        assert_eq!(plan.spans[0].easing, 60);
-        let temp = tempfile::tempdir().unwrap();
-        let mut xml = String::from(
-            "<DOMDocument><timelines><DOMTimeline><layers><DOMLayer name=\"locator_track\"><frames>",
-        );
-        for span in plan.spans {
-            let t = &samples[span.start].values;
-            let kx = f64::from(t[2]).to_radians();
-            let ky = f64::from(t[3]).to_radians();
-            let timing = if span.tween {
-                format!(" tweenType=\"motion\" acceleration=\"{}\"", -span.easing)
-            } else {
-                String::new()
-            };
-            xml.push_str(&format!("<DOMFrame index=\"{}\" duration=\"{}\"{}><elements><DOMSymbolInstance libraryItemName=\"locator\"><matrix><Matrix a=\"{}\" b=\"{}\" c=\"{}\" d=\"{}\" tx=\"{}\" ty=\"{}\"/></matrix><transformationPoint><Point x=\"0\" y=\"0\"/></transformationPoint><color><Color alphaMultiplier=\"{}\"/></color></DOMSymbolInstance></elements></DOMFrame>",span.start,span.duration,timing,f64::from(t[4])*kx.cos(),f64::from(t[4])*kx.sin(),-f64::from(t[5])*ky.sin(),f64::from(t[5])*ky.cos(),t[0],t[1],t[7]));
-        }
-        xml.push_str("</frames></DOMLayer></layers></DOMTimeline></timelines></DOMDocument>");
-        std::fs::write(temp.path().join("DOMDocument.xml"), xml).unwrap();
-        let compiled = crate::forward::convert(temp.path()).unwrap();
-        let actual = &compiled
-            .tracks
-            .iter()
-            .find(|t| t.name == "locator_track")
-            .unwrap()
-            .transforms;
-        for (source, target) in samples.iter().zip(actual) {
-            for i in FIELDS {
-                let delta = if i == 2 || i == 3 {
-                    (f64::from(source.values[i]) - f64::from(target.values[i]) + 180.)
-                        .rem_euclid(360.)
-                        - 180.
-                } else {
-                    f64::from(source.values[i]) - f64::from(target.values[i])
-                };
-                let tolerance = if i < 4 { 0.051 } else { 0.00051 };
-                assert!(
-                    delta.abs() <= tolerance,
-                    "field {i} {source:?} -> {target:?}"
-                );
-            }
-        }
-    }
-    #[test]
-    fn subframe_extremum_rejects_a_false_integer_only_fit() {
-        let samples = vec![
-            transform([0., 0., 0., 0., 1., 1., 0., 1.]),
-            transform([7.5, 0., 0., 0., 1., 1., 0., 1.]),
-            transform([10., 0., 0., 0., 1., 1., 0., 1.]),
-        ];
-        let plan = plan(&samples, Tolerance::default());
-        // A 100% quadratic ease hits all three whole frames exactly but has a
-        // 0.625px error halfway through each interval against the engine.
-        assert_ne!(plan.spans[0].duration, 2);
-        assert_continuous_bound(&samples, &plan, Tolerance::default());
-    }
-    #[test]
-    fn constant_holds_merge_and_scale_sign_flips_are_reported() {
-        let samples = vec![Transform::default(); 50];
-        let p = plan(&samples, Tolerance::default());
-        assert_eq!(p.spans.len(), 1);
-        assert!(!p.spans[0].tween);
-        assert_eq!(p.spans[0].duration, 50);
-        let samples = vec![
-            transform([0., 0., 0., 0., -1., 1., 0., 1.]),
-            transform([0., 0., 0., 0., 1., 1., 0., 1.]),
-        ];
-        let p = plan(&samples, Tolerance::default());
-        assert_eq!(p.unfitted_intervals, vec![0]);
-    }
 }

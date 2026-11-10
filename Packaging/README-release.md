@@ -23,4 +23,4 @@
 
 默认优先减少关键帧；“精确采样”或 `--strict-tweens` 可收紧运动误差。compiled 已丢失原始手工关键帧，逆向会根据采样重建补间。老 Flash 的 OLE 二进制 FLA 需先用 Animate 另存为 ZIP/XFL。
 
-源码、构建说明及验证报告：[FluorescentLava/fla-reanim-compiler](https://github.com/FluorescentLava/fla-reanim-compiler)。发行文件的大小、SHA-256 和源码版本记录在同目录 `release-manifest.json`。
+源码及构建说明：[FluorescentLava/fla-reanim-compiler](https://github.com/FluorescentLava/fla-reanim-compiler)。发行文件的大小、SHA-256 和源码版本记录在同目录 `release-manifest.json`。

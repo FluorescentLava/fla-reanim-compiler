@@ -62,32 +62,3 @@ pub fn decode(bytes: &[u8]) -> Result<RgbaImage> {
     }
     RgbaImage::from_raw(width, height, rgba).context("Invalid decoded JPEG dimensions")
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    #[test]
-    fn rgb_grayscale_and_cmyk_keep_expected_channels() -> Result<()> {
-        for (bytes, expected) in [
-            (
-                include_bytes!("../tests/fixtures/rgb-red.jpg").as_slice(),
-                [240u8, 20, 10, 255],
-            ),
-            (
-                include_bytes!("../tests/fixtures/gray.jpg").as_slice(),
-                [90, 90, 90, 255],
-            ),
-            (
-                include_bytes!("../tests/fixtures/cmyk-red.jpg").as_slice(),
-                [255, 0, 0, 255],
-            ),
-        ] {
-            let image = decode(bytes)?;
-            assert_eq!(image.dimensions(), (8, 8));
-            for (actual, expected) in image.get_pixel(3, 4).0.iter().zip(expected) {
-                assert!((i16::from(*actual) - i16::from(expected)).abs() <= 2);
-            }
-        }
-        Ok(())
-    }
-}

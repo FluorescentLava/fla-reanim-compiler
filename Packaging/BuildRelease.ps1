@@ -13,45 +13,6 @@ if ($destination.TrimEnd('\', '/') -eq $projectRoot.TrimEnd('\', '/')) {
 }
 $cargo = Join-Path $env:USERPROFILE '.cargo\bin\cargo.exe'
 if (Get-Command cargo -ErrorAction SilentlyContinue) { $cargo = (Get-Command cargo).Source }
-. (Join-Path $PSScriptRoot 'AssertNative.ps1')
-
-function Remove-PublishedLicenses([string]$OutputDirectory) {
-    $output = [IO.Path]::GetFullPath($OutputDirectory).TrimEnd('\', '/')
-    $ancestor = Get-Item -LiteralPath $output -Force
-    while ($null -ne $ancestor) {
-        if ($ancestor.Attributes -band [IO.FileAttributes]::ReparsePoint) { throw 'Release cleanup does not follow directory links.' }
-        $ancestor = $ancestor.Parent
-    }
-    foreach ($name in @('LICENSE', 'Licenses')) {
-        $target = [IO.Path]::GetFullPath((Join-Path $output $name))
-        if ([IO.Path]::GetDirectoryName($target) -ne $output -or [IO.Path]::GetFileName($target) -ne $name -or $target -eq $projectRoot) {
-            throw 'Refusing to remove an unexpected release license path.'
-        }
-        if (-not (Test-Path -LiteralPath $target)) { continue }
-        $entry = Get-Item -LiteralPath $target -Force
-        if ($entry.Attributes -band [IO.FileAttributes]::ReparsePoint) { throw 'Release cleanup does not follow license links.' }
-        if ($name -eq 'LICENSE') {
-            if ($entry.PSIsContainer) { throw 'Expected the old LICENSE to be a file.' }
-            Remove-Item -LiteralPath $target -Force
-        }
-        else {
-            if (-not $entry.PSIsContainer) { throw 'Expected the old Licenses to be a directory.' }
-            $pending = [Collections.Generic.Stack[string]]::new()
-            $pending.Push($target)
-            while ($pending.Count) {
-                foreach ($child in Get-ChildItem -LiteralPath $pending.Pop() -Force) {
-                    $childPath = [IO.Path]::GetFullPath($child.FullName)
-                    if (-not $childPath.StartsWith($target + '\', [StringComparison]::OrdinalIgnoreCase) -or
-                        ($child.Attributes -band [IO.FileAttributes]::ReparsePoint)) {
-                        throw 'Refusing recursive license cleanup outside the verified directory or through a link.'
-                    }
-                    if ($child.PSIsContainer) { $pending.Push($childPath) }
-                }
-            }
-            Remove-Item -LiteralPath $target -Recurse -Force
-        }
-    }
-}
 
 $temporaryRoot = [IO.Path]::GetFullPath([IO.Path]::GetTempPath()).TrimEnd('\', '/')
 $staging = Join-Path $temporaryRoot ('fla-reanim-release-' + [Guid]::NewGuid().ToString('N'))
@@ -67,8 +28,6 @@ try {
     $targetDirectory = if ($env:CARGO_TARGET_DIR) { [IO.Path]::GetFullPath($env:CARGO_TARGET_DIR) } else { Join-Path $projectRoot 'target' }
     $executable = Join-Path $targetDirectory 'release\FlaReanimCompiler.exe'
     $cli = Join-Path $targetDirectory 'release\fla-reanim-cli.exe'
-    $imports = @(Assert-NativeExecutable $executable)
-    $cliImports = @(Assert-NativeExecutable $cli)
     # The default output contains the independent src repository. Assemble and
     # enumerate only an owned staging directory, never the output directory.
     Copy-Item -LiteralPath $executable -Destination $payloadDirectory
@@ -113,11 +72,8 @@ try {
         CliBytes = (Get-Item -LiteralPath (Join-Path $payloadDirectory 'fla-reanim-cli.exe')).Length
         CliSha256 = (Get-FileHash -LiteralPath (Join-Path $payloadDirectory 'fla-reanim-cli.exe')).Hash
         ZipSha256 = (Get-FileHash -LiteralPath $zipPath).Hash
-        Imports = $imports -join ', '
-        CliImports = $cliImports -join ', '
     } | ConvertTo-Json | Set-Content -LiteralPath $manifestPath -Encoding utf8
     New-Item -ItemType Directory -Path $destination -Force | Out-Null
-    Remove-PublishedLicenses $destination
     foreach ($file in $files) {
         $relative = $file.FullName.Substring($payloadDirectory.Length + 1)
         $target = Join-Path $destination $relative

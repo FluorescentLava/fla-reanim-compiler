@@ -264,7 +264,7 @@ pub fn convert(input: &Path, options: &Options) -> Result<Report> {
 pub fn cli(args: impl IntoIterator<Item = String>) -> Result<()> {
     let mut options = Options::default();
     let mut paths = Vec::new();
-    let (mut inspect, mut dump, mut verify) = (false, false, false);
+    let (mut inspect, mut dump) = (false, false);
     let mut args = args.into_iter();
     while let Some(arg) = args.next() {
         match arg.as_str() {
@@ -282,7 +282,6 @@ pub fn cli(args: impl IntoIterator<Item = String>) -> Result<()> {
             }
             "--inspect" => inspect = true,
             "--dump" => dump = true,
-            "--verify" => verify = true,
             "--output" | "-o" => {
                 options.output = Some(args.next().context("--output 缺少路径")?.into())
             }
@@ -292,7 +291,7 @@ pub fn cli(args: impl IntoIterator<Item = String>) -> Result<()> {
             }
             "--help" | "-h" => {
                 println!(
-                    "FlaReanimCompiler [--plus] [--strict-tweens] [--stage WIDTHxHEIGHT] [--force] [--resource-root DIR] [-o FILE] FILE...\nFlaReanimCompiler --tv-to-pc [-o FILE_OR_DIRECTORY] TV_FILE_OR_DIRECTORY...\n--stage: override reverse authoring stage; stock sizes come from GOTY FLA measurements\n--strict-tweens: tighter reverse curve tolerance, with more keyframes\n--tv-to-pc: convert TV animation layout to PC; folders are processed as a batch\n--inspect: summary; --dump: raw definition JSON; --verify: check unchanged-source exact recovery\nNo .NET/Python required. GUI uses installed Windows App Runtime."
+                    "FlaReanimCompiler [--plus] [--strict-tweens] [--stage WIDTHxHEIGHT] [--force] [--resource-root DIR] [-o FILE] FILE...\nFlaReanimCompiler --tv-to-pc [-o FILE_OR_DIRECTORY] TV_FILE_OR_DIRECTORY...\n--stage: override reverse authoring stage; stock sizes come from GOTY FLA measurements\n--strict-tweens: tighter reverse curve tolerance, with more keyframes\n--tv-to-pc: convert TV animation layout to PC; folders are processed as a batch\n--inspect: summary; --dump: raw definition JSON\nNo .NET/Python required. GUI uses installed Windows App Runtime."
                 );
                 return Ok(());
             }
@@ -315,8 +314,7 @@ pub fn cli(args: impl IntoIterator<Item = String>) -> Result<()> {
                 && options.stage.is_none()
                 && !options.link
                 && !inspect
-                && !dump
-                && !verify,
+                && !dump,
             "--tv-to-pc 不与打包、解包或检查选项组合使用"
         );
     }
@@ -340,20 +338,6 @@ pub fn cli(args: impl IntoIterator<Item = String>) -> Result<()> {
                         d.fps
                     );
                 }
-            } else if verify {
-                let temp = tempfile::tempdir()?;
-                let mut settings = options.clone();
-                settings.output = Some(temp.path().join("verify.fla"));
-                let report = convert(&input, &settings)?;
-                let restored = reverse::original_if_unchanged(&report.output)?
-                    .context("missing round-trip metadata")?;
-                ensure!(restored == fs::read(&input)?, "round trip differs");
-                println!(
-                    "{}: exact compiled round trip; {} tracks, {} frames",
-                    input.display(),
-                    report.tracks,
-                    report.frames
-                );
             } else {
                 println!("{}", serde_json::to_string(&convert(&input, &options)?)?);
             }
