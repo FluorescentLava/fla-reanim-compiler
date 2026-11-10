@@ -1,0 +1,290 @@
+{
+  "purpose": "Independent native JPEG decoder investigation; production corpus must still be rerun after rebuild",
+  "old_decoder": "zune-jpeg 0.5.15",
+  "new_decoder": "jpeg-decoder 0.3.2 (pure Rust, default-features=false)",
+  "reference": "Pillow/libjpeg, original PNG blue-channel alpha mask",
+  "jpeg_source_files": 23,
+  "all_within_existing_tolerance_4": true,
+  "new_maximum_delta": 3,
+  "probe_source_sha256": "3cd6184717c328552fdea0baec4263e5d41652ee78064becf578c50f8abdc754",
+  "probe_binary_sha256": "0bcb80ffe0a834209c798477003c51598ea921cab221ba266a3d2c7864a20ba5",
+  "probe_cargo_lock_sha256": "d2b5cac3d101dfc50318a4a0d9e106ca2c980bbf47efe89ea0a0a20c042221fb",
+  "results": [
+    {
+      "input": "C:\\Users\\FluorescentLava\\Desktop\\PvZ Projects\\.版本\\小推车\\src\\Resources\\images\\Credits_BigBrain.jpg",
+      "sha256": "b24478fcfa2b4224d19735565805fbab4af34d61e9ea562d531736491a70564a",
+      "dimensions": [
+        340,
+        315
+      ],
+      "old_zune_maximum_premultiplied_rgb_delta": 2,
+      "new_jpeg_decoder_maximum_premultiplied_rgb_delta": 3,
+      "old_different_channels": 1870,
+      "new_different_channels": 6079
+    },
+    {
+      "input": "C:\\Users\\FluorescentLava\\Desktop\\PvZ Projects\\.版本\\小推车\\src\\Resources\\images\\background\\background1.jpg",
+      "sha256": "ae0bf7fe56dfb25793189a70da06824c7a95815d7a692574557d01adcdc2a02b",
+      "dimensions": [
+        1880,
+        720
+      ],
+      "old_zune_maximum_premultiplied_rgb_delta": 3,
+      "new_jpeg_decoder_maximum_premultiplied_rgb_delta": 3,
+      "old_different_channels": 36602,
+      "new_different_channels": 146634
+    },
+    {
+      "input": "C:\\Users\\FluorescentLava\\Desktop\\PvZ Projects\\.版本\\小推车\\src\\Resources\\images\\background\\background2.jpg",
+      "sha256": "a1a618b54bddc1ede82cb0c70de5e8509fb5bc0a7e6fc1898702a2d9f881fcd3",
+      "dimensions": [
+        1880,
+        720
+      ],
+      "old_zune_maximum_premultiplied_rgb_delta": 3,
+      "new_jpeg_decoder_maximum_premultiplied_rgb_delta": 3,
+      "old_different_channels": 28903,
+      "new_different_channels": 137939
+    },
+    {
+      "input": "C:\\Users\\FluorescentLava\\Desktop\\PvZ Projects\\.版本\\小推车\\src\\Resources\\images\\background\\background3.jpg",
+      "sha256": "5f11460943d6d5f15f640935f21b650af4472f07ea3a03fdc3eae0422788337a",
+      "dimensions": [
+        1880,
+        720
+      ],
+      "old_zune_maximum_premultiplied_rgb_delta": 3,
+      "new_jpeg_decoder_maximum_premultiplied_rgb_delta": 3,
+      "old_different_channels": 36084,
+      "new_different_channels": 148759
+    },
+    {
+      "input": "C:\\Users\\FluorescentLava\\Desktop\\PvZ Projects\\.版本\\小推车\\src\\Resources\\images\\background\\background4.jpg",
+      "sha256": "5ae3c77feae680595819dc913f651eb6b4774a83c818c18f02134e415c8e1929",
+      "dimensions": [
+        1880,
+        720
+      ],
+      "old_zune_maximum_premultiplied_rgb_delta": 3,
+      "new_jpeg_decoder_maximum_premultiplied_rgb_delta": 3,
+      "old_different_channels": 26983,
+      "new_different_channels": 139449
+    },
+    {
+      "input": "C:\\Users\\FluorescentLava\\Desktop\\PvZ Projects\\.版本\\小推车\\src\\Resources\\images\\background\\background5.jpg",
+      "sha256": "ab5acf056868601f12950ad084e718c2b8f17bd76a94866fae86c0bed4958ddf",
+      "dimensions": [
+        1880,
+        720
+      ],
+      "old_zune_maximum_premultiplied_rgb_delta": 3,
+      "new_jpeg_decoder_maximum_premultiplied_rgb_delta": 3,
+      "old_different_channels": 27551,
+      "new_different_channels": 138123
+    },
+    {
+      "input": "C:\\Users\\FluorescentLava\\Desktop\\PvZ Projects\\.版本\\小推车\\src\\Resources\\reanim\\CrazyDave_body1.jpg",
+      "sha256": "d6c758a9aa6f5b47b43f59cda7456865d671a303ffa7b086e2c396011e599313",
+      "dimensions": [
+        344,
+        401
+      ],
+      "old_zune_maximum_premultiplied_rgb_delta": 3,
+      "new_jpeg_decoder_maximum_premultiplied_rgb_delta": 3,
+      "old_different_channels": 17090,
+      "new_different_channels": 8953
+    },
+    {
+      "input": "C:\\Users\\FluorescentLava\\Desktop\\PvZ Projects\\.版本\\小推车\\src\\Resources\\reanim\\Credits_nozombies.jpg",
+      "sha256": "3a129e00d12507aae2697e767cdf81e88a0f3ad1fa2d130c4cb0fe9040fc9aeb",
+      "dimensions": [
+        220,
+        220
+      ],
+      "old_zune_maximum_premultiplied_rgb_delta": 3,
+      "new_jpeg_decoder_maximum_premultiplied_rgb_delta": 3,
+      "old_different_channels": 1109,
+      "new_different_channels": 2706
+    },
+    {
+      "input": "C:\\Users\\FluorescentLava\\Desktop\\PvZ Projects\\.版本\\小推车\\src\\Resources\\reanim\\Credits_throat.jpg",
+      "sha256": "6247af0fc87b2f333b07fd8c7254ade992aed5c5c2258dffd6f90ff5e133a373",
+      "dimensions": [
+        459,
+        946
+      ],
+      "old_zune_maximum_premultiplied_rgb_delta": 4,
+      "new_jpeg_decoder_maximum_premultiplied_rgb_delta": 3,
+      "old_different_channels": 30420,
+      "new_different_channels": 11230
+    },
+    {
+      "input": "C:\\Users\\FluorescentLava\\Desktop\\PvZ Projects\\.版本\\小推车\\src\\Resources\\reanim\\Credits_wearetheundead.jpg",
+      "sha256": "3238d99498a454ac92cccb803392174f9a261bf9f33baf2629dddbb7c40fc87f",
+      "dimensions": [
+        750,
+        131
+      ],
+      "old_zune_maximum_premultiplied_rgb_delta": 2,
+      "new_jpeg_decoder_maximum_premultiplied_rgb_delta": 3,
+      "old_different_channels": 1608,
+      "new_different_channels": 5264
+    },
+    {
+      "input": "C:\\Users\\FluorescentLava\\Desktop\\PvZ Projects\\.版本\\小推车\\src\\Resources\\reanim\\SelectorScreen_BG.jpg",
+      "sha256": "c929aa7e323ac0fa25dec9adf4f4d0ecf7d9b851c1be37ababe30ac4806276e5",
+      "dimensions": [
+        100,
+        75
+      ],
+      "old_zune_maximum_premultiplied_rgb_delta": 2,
+      "new_jpeg_decoder_maximum_premultiplied_rgb_delta": 3,
+      "old_different_channels": 168,
+      "new_different_channels": 844
+    },
+    {
+      "input": "C:\\Users\\FluorescentLava\\Desktop\\PvZ Projects\\.版本\\小推车\\src\\Resources\\reanim\\SelectorScreen_BG_Center.jpg",
+      "sha256": "81df9281b48f7b43e1268dd2fad233315e7354a1d4f5615489b83ec3c358b877",
+      "dimensions": [
+        720,
+        350
+      ],
+      "old_zune_maximum_premultiplied_rgb_delta": 13,
+      "new_jpeg_decoder_maximum_premultiplied_rgb_delta": 3,
+      "old_different_channels": 46978,
+      "new_different_channels": 17105
+    },
+    {
+      "input": "C:\\Users\\FluorescentLava\\Desktop\\PvZ Projects\\.版本\\小推车\\src\\Resources\\reanim\\SelectorScreen_BG_Left.jpg",
+      "sha256": "2093ae576649e639653db02bb70f78ac19adbf319110fb3740e3de98c8ef8d02",
+      "dimensions": [
+        476,
+        680
+      ],
+      "old_zune_maximum_premultiplied_rgb_delta": 3,
+      "new_jpeg_decoder_maximum_premultiplied_rgb_delta": 3,
+      "old_different_channels": 30952,
+      "new_different_channels": 14964
+    },
+    {
+      "input": "C:\\Users\\FluorescentLava\\Desktop\\PvZ Projects\\.版本\\小推车\\src\\Resources\\reanim\\SelectorScreen_BG_Right.jpg",
+      "sha256": "61ed4fdff9a0e5c78addd7da991cddefb7add4342f4e627495195ffce4f32d33",
+      "dimensions": [
+        800,
+        600
+      ],
+      "old_zune_maximum_premultiplied_rgb_delta": 3,
+      "new_jpeg_decoder_maximum_premultiplied_rgb_delta": 3,
+      "old_different_channels": 6772,
+      "new_different_channels": 30712
+    },
+    {
+      "input": "C:\\Users\\FluorescentLava\\Desktop\\PvZ Projects\\.版本\\小推车\\src\\Resources\\reanim\\Zombie_boss_neck.jpg",
+      "sha256": "d6e3b5c7b2ac69ab368bfc9a74443961ed60bd6245e1bff99016d6449947c531",
+      "dimensions": [
+        268,
+        289
+      ],
+      "old_zune_maximum_premultiplied_rgb_delta": 4,
+      "new_jpeg_decoder_maximum_premultiplied_rgb_delta": 3,
+      "old_different_channels": 31345,
+      "new_different_channels": 11315
+    },
+    {
+      "input": "C:\\Users\\FluorescentLava\\Desktop\\PvZ Projects\\.版本\\小推车\\src\\Resources\\reanim\\Zombie_boss_upperbody.jpg",
+      "sha256": "8cb36d2e075032df3b73858a7b143105ebe582b9506406bd336ec9587c3d28e9",
+      "dimensions": [
+        522,
+        479
+      ],
+      "old_zune_maximum_premultiplied_rgb_delta": 4,
+      "new_jpeg_decoder_maximum_premultiplied_rgb_delta": 3,
+      "old_different_channels": 54137,
+      "new_different_channels": 31513
+    },
+    {
+      "input": "C:\\Users\\FluorescentLava\\Desktop\\PvZ Projects\\.版本\\小推车\\src\\Resources\\reanim\\ZombiesWon.jpg",
+      "sha256": "3386146d37828e9bdd154e4f8d652159ea4d97f7f7b20f43766859e93c374488",
+      "dimensions": [
+        564,
+        468
+      ],
+      "old_zune_maximum_premultiplied_rgb_delta": 3,
+      "new_jpeg_decoder_maximum_premultiplied_rgb_delta": 3,
+      "old_different_channels": 2491,
+      "new_different_channels": 7181
+    },
+    {
+      "input": "C:\\Users\\FluorescentLava\\Desktop\\PvZ Projects\\.版本\\小推车\\src\\Resources\\reanim\\tree6.jpg",
+      "sha256": "e3bf174784dca5ae7a2a4cb1a20e514871df3618aebea505b7c723936b88192e",
+      "dimensions": [
+        435,
+        506
+      ],
+      "old_zune_maximum_premultiplied_rgb_delta": 3,
+      "new_jpeg_decoder_maximum_premultiplied_rgb_delta": 3,
+      "old_different_channels": 2091,
+      "new_different_channels": 6192
+    },
+    {
+      "input": "C:\\Users\\FluorescentLava\\Desktop\\PvZ Projects\\.版本\\小推车\\src\\Resources\\reanim\\tree7.jpg",
+      "sha256": "7f26c3bc73358962de9cf67e340e29813b6cb1568c2de53812cfff949aae5a56",
+      "dimensions": [
+        681,
+        548
+      ],
+      "old_zune_maximum_premultiplied_rgb_delta": 3,
+      "new_jpeg_decoder_maximum_premultiplied_rgb_delta": 3,
+      "old_different_channels": 3593,
+      "new_different_channels": 11583
+    },
+    {
+      "input": "C:\\Users\\FluorescentLava\\Desktop\\PvZ Projects\\.版本\\小推车\\src\\Resources\\reanim\\tree8.jpg",
+      "sha256": "d0ed8a828ec7072ce22fd565045572a19cbc344e578fb50c67a22988ad689534",
+      "dimensions": [
+        806,
+        561
+      ],
+      "old_zune_maximum_premultiplied_rgb_delta": 3,
+      "new_jpeg_decoder_maximum_premultiplied_rgb_delta": 3,
+      "old_different_channels": 4341,
+      "new_different_channels": 15827
+    },
+    {
+      "input": "C:\\Users\\FluorescentLava\\Desktop\\PvZ Projects\\.版本\\小推车\\src\\Resources\\reanim\\tree9.jpg",
+      "sha256": "95724ddd98b09132cdb5e43e8fd56233208c60afa1bec56766888a72aee1e06e",
+      "dimensions": [
+        525,
+        559
+      ],
+      "old_zune_maximum_premultiplied_rgb_delta": 3,
+      "new_jpeg_decoder_maximum_premultiplied_rgb_delta": 3,
+      "old_different_channels": 4206,
+      "new_different_channels": 14358
+    },
+    {
+      "input": "C:\\Users\\FluorescentLava\\Desktop\\PvZ Projects\\.版本\\小推车\\src\\Resources\\reanim\\tree_overlay8.jpg",
+      "sha256": "a08570a82cee3ad1e09461c6b4b7b2c2422223bd497eb20afb18a6c377a35bee",
+      "dimensions": [
+        482,
+        147
+      ],
+      "old_zune_maximum_premultiplied_rgb_delta": 3,
+      "new_jpeg_decoder_maximum_premultiplied_rgb_delta": 3,
+      "old_different_channels": 1247,
+      "new_different_channels": 3913
+    },
+    {
+      "input": "C:\\Users\\FluorescentLava\\Desktop\\PvZ Projects\\.版本\\小推车\\src\\Resources\\reanim\\tree_overlay9.jpg",
+      "sha256": "e771f1127adfb19476974db62b43577ebf1d2d61f0a253e22314671e5dad9994",
+      "dimensions": [
+        515,
+        180
+      ],
+      "old_zune_maximum_premultiplied_rgb_delta": 3,
+      "new_jpeg_decoder_maximum_premultiplied_rgb_delta": 3,
+      "old_different_channels": 1432,
+      "new_different_channels": 4650
+    }
+  ]
+}

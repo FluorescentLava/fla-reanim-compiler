@@ -1,0 +1,236 @@
+{
+  "source": "C:\\Users\\FluorescentLava\\Desktop\\PvZ Projects\\.版本\\小推车\\寄存\\Chomper.fla",
+  "source_sha256": "9f54d63149cf9b118c4825c8e7952bee606c65a3bfd443270ac915a94ca70ef2",
+  "compiled": "C:\\Users\\FluorescentLava\\Desktop\\PvZ Projects\\.版本\\小推车\\src\\.obj\\fla-native-benchmark\\forward_Chomper\\rust\\Chomper.reanim.compiled",
+  "compiled_sha256": "31302c30a9675530c3304fc3b6d4f6a9eed043b0103b7772316dfd7c8e9595dd",
+  "nonzero_acceleration_spans": 123,
+  "checked_renderable_spans": 121,
+  "checked_frame_samples": 589,
+  "maximum_source_evaluation_error_by_channel": [
+    9.667183781984676,
+    12.386229403798303,
+    15.586308915516668,
+    19.18448495565906,
+    0.07942321823685494,
+    0.11297478919989246,
+    0.0,
+    0.0
+  ],
+  "maximum_parameter_distance_from_ignoring_acceleration": 19.21624352974652,
+  "unsupported_spans": [
+    {
+      "layer": "Zombie_outerarm_lower",
+      "frame": 100,
+      "reason": "Non-static source display change"
+    },
+    {
+      "layer": "Zombie_outerarm_hand",
+      "frame": 100,
+      "reason": "Non-static source display change"
+    }
+  ],
+  "error_count": 1842,
+  "errors": [
+    {
+      "layer": "Chomper_topjaw",
+      "frame": 37,
+      "channel": 0,
+      "actual": 3.0999999046325684,
+      "expected_from_xfl_acceleration": 3.8512610209940914,
+      "error": 0.751261116361523
+    },
+    {
+      "layer": "Chomper_topjaw",
+      "frame": 37,
+      "channel": 1,
+      "actual": 7.199999809265137,
+      "expected_from_xfl_acceleration": 5.960367697895901,
+      "error": 1.239632111369236
+    },
+    {
+      "layer": "Chomper_topjaw",
+      "frame": 37,
+      "channel": 2,
+      "actual": -11.600000381469727,
+      "expected_from_xfl_acceleration": -13.069472581377427,
+      "error": 1.469472199907699
+    },
+    {
+      "layer": "Chomper_topjaw",
+      "frame": 37,
+      "channel": 3,
+      "actual": -11.899999618530273,
+      "expected_from_xfl_acceleration": -13.425974155985134,
+      "error": 1.5259745374548572
+    },
+    {
+      "layer": "Chomper_topjaw",
+      "frame": 37,
+      "channel": 4,
+      "actual": 0.9629999995231628,
+      "expected_from_xfl_acceleration": 0.973760998743111,
+      "error": 0.010760999219948109
+    },
+    {
+      "layer": "Chomper_topjaw",
+      "frame": 37,
+      "channel": 5,
+      "actual": 0.8169999718666077,
+      "expected_from_xfl_acceleration": 0.8195870668790233,
+      "error": 0.002587095012415608
+    },
+    {
+      "layer": "Chomper_topjaw",
+      "frame": 38,
+      "channel": 0,
+      "actual": 9.0,
+      "expected_from_xfl_acceleration": 9.886385540857123,
+      "error": 0.8863855408571233
+    },
+    {
+      "layer": "Chomper_topjaw",
+      "frame": 38,
+      "channel": 1,
+      "actual": -1.399999976158142,
+      "expected_from_xfl_acceleration": -2.5208481791827335,
+      "error": 1.1208482030245914
+    },
+    {
+      "layer": "Chomper_topjaw",
+      "frame": 38,
+      "channel": 2,
+      "actual": -22.5,
+      "expected_from_xfl_acceleration": -23.950076670932006,
+      "error": 1.4500766709319919
+    },
+    {
+      "layer": "Chomper_topjaw",
+      "frame": 38,
+      "channel": 3,
+      "actual": -23.100000381469727,
+      "expected_from_xfl_acceleration": -24.621394685375122,
+      "error": 1.5213943039053959
+    },
+    {
+      "layer": "Chomper_topjaw",
+      "frame": 38,
+      "channel": 4,
+      "actual": 1.0420000553131104,
+      "expected_from_xfl_acceleration": 1.0528905257266197,
+      "error": 0.010890470413509323
+    },
+    {
+      "layer": "Chomper_topjaw",
+      "frame": 38,
+      "channel": 5,
+      "actual": 0.8349999785423279,
+      "expected_from_xfl_acceleration": 0.8376514279379987,
+      "error": 0.0026514493956708574
+    },
+    {
+      "layer": "Chomper_topjaw",
+      "frame": 95,
+      "channel": 1,
+      "actual": 9.5,
+      "expected_from_xfl_acceleration": 8.766173534821776,
+      "error": 0.7338264651782236
+    },
+    {
+      "layer": "Chomper_topjaw",
+      "frame": 95,
+      "channel": 2,
+      "actual": -3.4000000953674316,
+      "expected_from_xfl_acceleration": -6.2099647743159085,
+      "error": 2.8099646789484893
+    },
+    {
+      "layer": "Chomper_topjaw",
+      "frame": 95,
+      "channel": 3,
+      "actual": -3.4000000953674316,
+      "expected_from_xfl_acceleration": -6.209569016276772,
+      "error": 2.809568920909328
+    },
+    {
+      "layer": "Chomper_topjaw",
+      "frame": 96,
+      "channel": 0,
+      "actual": 9.5,
+      "expected_from_xfl_acceleration": 9.8501548932235,
+      "error": 0.35015489322350035
+    },
+    {
+      "layer": "Chomper_topjaw",
+      "frame": 96,
+      "channel": 1,
+      "actual": 8.600000381469727,
+      "expected_from_xfl_acceleration": 7.478957618216915,
+      "error": 1.1210427632528113
+    },
+    {
+      "layer": "Chomper_topjaw",
+      "frame": 96,
+      "channel": 2,
+      "actual": -6.800000190734863,
+      "expected_from_xfl_acceleration": -11.290845044210743,
+      "error": 4.490844853475892
+    },
+    {
+      "layer": "Chomper_topjaw",
+      "frame": 96,
+      "channel": 3,
+      "actual": -6.800000190734863,
+      "expected_from_xfl_acceleration": -11.290125484139585,
+      "error": 4.490125293404731
+    },
+    {
+      "layer": "Chomper_topjaw",
+      "frame": 97,
+      "channel": 0,
+      "actual": 9.800000190734863,
+      "expected_from_xfl_acceleration": 10.228387324944405,
+      "error": 0.428387134209542
+    },
+    {
+      "layer": "Chomper_topjaw",
+      "frame": 97,
+      "channel": 1,
+      "actual": 7.800000190734863,
+      "expected_from_xfl_acceleration": 6.525439337110495,
+      "error": 1.2745608536243687
+    },
+    {
+      "layer": "Chomper_topjaw",
+      "frame": 97,
+      "channel": 2,
+      "actual": -10.199999809265137,
+      "expected_from_xfl_acceleration": -15.242640809684502,
+      "error": 5.042641000419366
+    },
+    {
+      "layer": "Chomper_topjaw",
+      "frame": 97,
+      "channel": 3,
+      "actual": -10.199999809265137,
+      "expected_from_xfl_acceleration": -15.241669403588439,
+      "error": 5.041669594323309
+    },
+    {
+      "layer": "Chomper_topjaw",
+      "frame": 98,
+      "channel": 0,
+      "actual": 10.100000381469727,
+      "expected_from_xfl_acceleration": 10.5546572341155,
+      "error": 0.4546568526457726
+    },
+    {
+      "layer": "Chomper_topjaw",
+      "frame": 98,
+      "channel": 1,
+      "actual": 6.900000095367432,
+      "expected_from_xfl_acceleration": 5.866134579346992,
+      "error": 1.0338655160204393
+    }
+  ],
+  "pass": false
+}

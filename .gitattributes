@@ -1,0 +1,4 @@
+# Preserve upstream license notices exactly, including their whitespace.
+Licenses/** -text -whitespace
+# The embedded manifest is retained byte-for-byte with the measured binaries.
+app.manifest whitespace=-blank-at-eof

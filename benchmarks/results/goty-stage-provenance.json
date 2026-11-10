@@ -1,0 +1,1402 @@
+{
+  "method": "unique OLE Contents document RECT in twips",
+  "adobe_cross_checks": {
+    "Blover": [
+      80,
+      80
+    ],
+    "Cabbagepult": [
+      80,
+      80
+    ],
+    "Cactus": [
+      80,
+      80
+    ],
+    "Caltrop": [
+      80,
+      80
+    ],
+    "Cattail": [
+      80,
+      80
+    ],
+    "CherryBomb": [
+      80,
+      80
+    ],
+    "Chomper": [
+      80,
+      80
+    ],
+    "CobCannon": [
+      160,
+      80
+    ],
+    "Coffeebean": [
+      80,
+      160
+    ]
+  },
+  "files": [
+    {
+      "file": "Blover.fla",
+      "sha256": "c8e2f2e45f426878a31732abc0feda6d78c82f8bf2506a2d203357a76190f2de",
+      "contents_rect_offset": 5405,
+      "stage": [
+        80,
+        80
+      ]
+    },
+    {
+      "file": "Cabbagepult.fla",
+      "sha256": "c1251051159c0e1aedd57ece2bd354b43e43939d3475e389078a8908dbe7172f",
+      "contents_rect_offset": 16240,
+      "stage": [
+        80,
+        80
+      ]
+    },
+    {
+      "file": "Cactus.fla",
+      "sha256": "f3293a05939980792348fc2d99189bed94b5ca5611ad474f8dec4c7e21faaeaf",
+      "contents_rect_offset": 13922,
+      "stage": [
+        80,
+        80
+      ]
+    },
+    {
+      "file": "Caltrop.fla",
+      "sha256": "3b4aa76edfada96ba729ce8839a94741f1f339eaa79357334bc7444ddc9d3fda",
+      "contents_rect_offset": 5088,
+      "stage": [
+        80,
+        80
+      ]
+    },
+    {
+      "file": "Cattail.fla",
+      "sha256": "067f210ecad77da3a4f88659338fd768e46821356071fd92373b27074b627d44",
+      "contents_rect_offset": 8988,
+      "stage": [
+        80,
+        80
+      ]
+    },
+    {
+      "file": "CherryBomb.fla",
+      "sha256": "a6f82ee8f305a1ff316cae334d6a03271a0f54b55f1f2d511c8a50970f0f7ac5",
+      "contents_rect_offset": 18355,
+      "stage": [
+        80,
+        80
+      ]
+    },
+    {
+      "file": "Chomper.fla",
+      "sha256": "48af90572ba33403b7abee2b606f5578402c822b320ec95a57d626dd45dcb0e4",
+      "contents_rect_offset": 16395,
+      "stage": [
+        80,
+        80
+      ]
+    },
+    {
+      "file": "CobCannon.fla",
+      "sha256": "df8731dc826aa14c39447d7d773feabb8605bf24580046ee18c81c8d49a053dc",
+      "contents_rect_offset": 10630,
+      "stage": [
+        160,
+        80
+      ]
+    },
+    {
+      "file": "Coffeebean.fla",
+      "sha256": "51888b403856f0b2e2cb705edb2cfb5e18d12d4095d26048d1efbc09f8a7a359",
+      "contents_rect_offset": 11465,
+      "stage": [
+        80,
+        160
+      ]
+    },
+    {
+      "file": "Coin_gold.fla",
+      "sha256": "f18977428bd29599e2779d686f2855d1698f04a42d20ed69f05302a8b1e1412d",
+      "contents_rect_offset": 4753,
+      "stage": [
+        45,
+        45
+      ]
+    },
+    {
+      "file": "Coin_silver.fla",
+      "sha256": "7ab958e1b7cd8820908fa88527a381b0a1ca83d30d09b7ae8f48651d5d931102",
+      "contents_rect_offset": 4477,
+      "stage": [
+        45,
+        45
+      ]
+    },
+    {
+      "file": "Cornpult.fla",
+      "sha256": "d675651f829da728893d8bf3feafb633b73dc47e45ab1fc88d25c89b35e56449",
+      "contents_rect_offset": 16907,
+      "stage": [
+        80,
+        80
+      ]
+    },
+    {
+      "file": "CrazyDave.fla",
+      "sha256": "751b57d18a23808158d5e5139054e418df89e95646c9c3695828f4b625955ad5",
+      "contents_rect_offset": 38277,
+      "stage": [
+        800,
+        600
+      ]
+    },
+    {
+      "file": "Credits_AnyHour.fla",
+      "sha256": "a69f4cc6b72730dc7bdb82f92ce60ee5e1393ae050cd3faa2dd19558da55ebf3",
+      "contents_rect_offset": 6924,
+      "stage": [
+        550,
+        400
+      ]
+    },
+    {
+      "file": "Credits_BigBrain.fla",
+      "sha256": "8d627026e39597681e1e253c0d0ddf4d1c975c84a5703021a0f9844d6c0a4614",
+      "contents_rect_offset": 1097,
+      "stage": [
+        300,
+        250
+      ]
+    },
+    {
+      "file": "Credits_Bossdance.fla",
+      "sha256": "e25df3f87c4237dc5532d1bbba25c72a13b202fcde187870656166cba5c64a26",
+      "contents_rect_offset": 5419,
+      "stage": [
+        550,
+        400
+      ]
+    },
+    {
+      "file": "Credits_brainplate.fla",
+      "sha256": "fbdd887ff998b1ac44add9b25214a64cbc31a6a0e953017ed95d1643ee38970f",
+      "contents_rect_offset": 2695,
+      "stage": [
+        300,
+        400
+      ]
+    },
+    {
+      "file": "Credits_CrazyDave.fla",
+      "sha256": "7502a466b1a6b24dfa6b5fdcc9a53553424c9e565f04ec9217b2345b733f7ce5",
+      "contents_rect_offset": 31623,
+      "stage": [
+        200,
+        300
+      ]
+    },
+    {
+      "file": "Credits_DiscoLights.fla",
+      "sha256": "90b402b9220f8b80c58179e9cd45d43551396ed1e2ab9852bab8355466264b7b",
+      "contents_rect_offset": 1347,
+      "stage": [
+        800,
+        600
+      ]
+    },
+    {
+      "file": "Credits_Flower_petals.fla",
+      "sha256": "defd860aa36efd2021adb1ff58c80a831f9b1f45823074b040408c67215c3af4",
+      "contents_rect_offset": 6607,
+      "stage": [
+        300,
+        250
+      ]
+    },
+    {
+      "file": "Credits_Football.fla",
+      "sha256": "20374d16eaeff0576f8f554994cfc9c359be5805a2a88e4cf7d8817a5949769b",
+      "contents_rect_offset": 4103,
+      "stage": [
+        550,
+        400
+      ]
+    },
+    {
+      "file": "Credits_Infantry.fla",
+      "sha256": "f4b6bf0a040f3f538689d3ee441cbbdc4c40c05421f15fbed3305d16db8f2a43",
+      "contents_rect_offset": 2793,
+      "stage": [
+        800,
+        600
+      ]
+    },
+    {
+      "file": "Credits_Jackbox.fla",
+      "sha256": "71e0b896ad6e132659656c66f5d545252bbd80884f9e5c1ace47dcdc97daa757",
+      "contents_rect_offset": 2527,
+      "stage": [
+        550,
+        400
+      ]
+    },
+    {
+      "file": "Credits_Main.fla",
+      "sha256": "aa09b82f7903aab8a3e57eeae0bac9a507fe169d50d7daf72e6cd08c4680a809",
+      "contents_rect_offset": 28242,
+      "stage": [
+        800,
+        600
+      ]
+    },
+    {
+      "file": "Credits_Main2.fla",
+      "sha256": "0463794db7cc36c40f60262fbbf10f4774f354b4dd3116629f25f389f5afe271",
+      "contents_rect_offset": 31138,
+      "stage": [
+        800,
+        600
+      ]
+    },
+    {
+      "file": "Credits_Main3.fla",
+      "sha256": "e8876baccaafebbb594c7b9bb551efc27c44aa312fc9a6fd9f939d71ef965dd1",
+      "contents_rect_offset": 40982,
+      "stage": [
+        800,
+        600
+      ]
+    },
+    {
+      "file": "Credits_SolarPower.fla",
+      "sha256": "d90512b432347d78e477fcd4d40bf2af31ac05dece538823b3facc01f9f70db8",
+      "contents_rect_offset": 3489,
+      "stage": [
+        800,
+        600
+      ]
+    },
+    {
+      "file": "Credits_stage.fla",
+      "sha256": "46b6345ce262939b5774d3641c13aef8a609a9df52fbb0b5d1302990e50a1d90",
+      "contents_rect_offset": 6472,
+      "stage": [
+        550,
+        400
+      ]
+    },
+    {
+      "file": "Credits_Throat.fla",
+      "sha256": "9d935533e5beeaa9a6d2ee88e9dec0a56b171efd125fac392fdad00d19f027ef",
+      "contents_rect_offset": 5558,
+      "stage": [
+        800,
+        600
+      ]
+    },
+    {
+      "file": "Credits_Tombstones.fla",
+      "sha256": "808a2712f5c3184ff08aa8bda35ed21a6f6748e78262eade1224c548b210e054",
+      "contents_rect_offset": 2705,
+      "stage": [
+        800,
+        600
+      ]
+    },
+    {
+      "file": "Credits_WeAreTheUndead.fla",
+      "sha256": "f46e9356678edef66bfab3c9991e3768ce8560e35ef32934d83172e1ec2c5b61",
+      "contents_rect_offset": 13992,
+      "stage": [
+        800,
+        600
+      ]
+    },
+    {
+      "file": "Credits_ZombieArmy1.fla",
+      "sha256": "3bd32c803a6dd0f4cd16677db25f304df31d89ebf222ea62aecacb3f3fc27111",
+      "contents_rect_offset": 12054,
+      "stage": [
+        800,
+        600
+      ]
+    },
+    {
+      "file": "Credits_ZombieArmy2.fla",
+      "sha256": "f9d00ace595cb8faaed86f340814e2da9746a3670fb1560d03e1eb57b487be2c",
+      "contents_rect_offset": 12876,
+      "stage": [
+        800,
+        600
+      ]
+    },
+    {
+      "file": "Diamond.fla",
+      "sha256": "1c290cf9fcef97475fa7372425bd83ea92f708c7e47a56017b3f7a2c683f773e",
+      "contents_rect_offset": 4146,
+      "stage": [
+        40,
+        40
+      ]
+    },
+    {
+      "file": "Digger_rising_dirt.fla",
+      "sha256": "f55ec342ab0c3adcebbc9525bd08cc49926a1f9bee3d6379de8a515b4b815ed1",
+      "contents_rect_offset": 5355,
+      "stage": [
+        90,
+        30
+      ]
+    },
+    {
+      "file": "DoomShroom.fla",
+      "sha256": "047243b1cd00ef8164727b4b8bcfefb1eaaa78b7b0f21b81999bbadd739a98b2",
+      "contents_rect_offset": 4061,
+      "stage": [
+        80,
+        80
+      ]
+    },
+    {
+      "file": "FinalWave.fla",
+      "sha256": "615bfe44b1bb8e55f5c8031ce7e1cd2142d17ef5bc6da803c7fb25e81b70fa70",
+      "contents_rect_offset": 1027,
+      "stage": [
+        800,
+        600
+      ]
+    },
+    {
+      "file": "fire.fla",
+      "sha256": "4f4def4edbdaeb3f54afe223af9fe82d94bdfa23123dd40a76530fd837be5bb2",
+      "contents_rect_offset": 9318,
+      "stage": [
+        100,
+        100
+      ]
+    },
+    {
+      "file": "FirePea.fla",
+      "sha256": "66189d1ac11e1ad0e8ceffd5cf633cfdf039a848bee134ce68a4e6d90fb02f76",
+      "contents_rect_offset": 3519,
+      "stage": [
+        80,
+        80
+      ]
+    },
+    {
+      "file": "FumeShroom.fla",
+      "sha256": "7d88c9f976bbf6d5138d2bd1aea541ac8a423cb9f160e2669853113c7f4cdef6",
+      "contents_rect_offset": 4943,
+      "stage": [
+        80,
+        80
+      ]
+    },
+    {
+      "file": "Garlic.fla",
+      "sha256": "84a396cb87276603d0c0c1c3fdfca684622155af4a5dae8d46c5f9a175053fc4",
+      "contents_rect_offset": 8251,
+      "stage": [
+        80,
+        80
+      ]
+    },
+    {
+      "file": "GatlingPea.fla",
+      "sha256": "b622ed8ab4dddb06a036d10dea4e47ebfcbdd3a36ff2ff8fd341a3cb2923e01d",
+      "contents_rect_offset": 25399,
+      "stage": [
+        80,
+        80
+      ]
+    },
+    {
+      "file": "GloomShroom.fla",
+      "sha256": "319581d142dec29b740bec0c9ba22159b236481c166c8b27fa897511241d0add",
+      "contents_rect_offset": 15768,
+      "stage": [
+        80,
+        80
+      ]
+    },
+    {
+      "file": "GoldMagnet.fla",
+      "sha256": "8c59ab3399dd7f164f6a841446dcebfe4ad84115dc0d00a30cd24978cca41baf",
+      "contents_rect_offset": 12523,
+      "stage": [
+        80,
+        80
+      ]
+    },
+    {
+      "file": "Gravebuster.fla",
+      "sha256": "228db4300f760e6c546a30e7fa0eef8a1df8758504e525865495104cf196eabe",
+      "contents_rect_offset": 9591,
+      "stage": [
+        80,
+        80
+      ]
+    },
+    {
+      "file": "Hammer.fla",
+      "sha256": "8249d9fd801f05d09d1b3412732cccb8cb09b0d7bf4f3c08feda0072a7b7e1a3",
+      "contents_rect_offset": 2684,
+      "stage": [
+        80,
+        80
+      ]
+    },
+    {
+      "file": "HypnoShroom.fla",
+      "sha256": "8386d1349625a3f3f6e2b90dd8567dc8d91df8ee9dee1d62a1e8a724a74f65b1",
+      "contents_rect_offset": 5173,
+      "stage": [
+        80,
+        80
+      ]
+    },
+    {
+      "file": "IceShroom.fla",
+      "sha256": "a2b72774323a0b32c70edfe389f0ec45e9c1bdd0f804836267d839df510cce8a",
+      "contents_rect_offset": 4788,
+      "stage": [
+        80,
+        80
+      ]
+    },
+    {
+      "file": "Imitater.fla",
+      "sha256": "4039a316e31d1936fb8c977c83f8a0d9843c0d84b7363134f32a39bb5f989396",
+      "contents_rect_offset": 12836,
+      "stage": [
+        80,
+        80
+      ]
+    },
+    {
+      "file": "Jalapeno.fla",
+      "sha256": "58d9f878bc96cc787cfdabb3e255b4a9ea301d18110274a449b8677779bf1bda",
+      "contents_rect_offset": 6429,
+      "stage": [
+        80,
+        80
+      ]
+    },
+    {
+      "file": "LawnMower.fla",
+      "sha256": "2e136cbe48bd4a1e58ce5a1151bdeaccd583923f082948bf68cef1f6ab8a4530",
+      "contents_rect_offset": 8901,
+      "stage": [
+        80,
+        80
+      ]
+    },
+    {
+      "file": "LawnMoweredZombie.fla",
+      "sha256": "db1d61e1bccf2bd9eb9f00cb0a36a25fb3e211ccfcdf7fed6cf4cf281642af8a",
+      "contents_rect_offset": 1053,
+      "stage": [
+        550,
+        400
+      ]
+    },
+    {
+      "file": "LilyPad.fla",
+      "sha256": "a84ff6156bb3bdcda7af3e4640a2ed742d29f627368d0ee8f506e3aca5da6803",
+      "contents_rect_offset": 2739,
+      "stage": [
+        80,
+        80
+      ]
+    },
+    {
+      "file": "LoadBar_sprout.fla",
+      "sha256": "819fe4190d2b133e675d6ddf4a93684819141a50c43be5cb79c56b4f6db96555",
+      "contents_rect_offset": 6165,
+      "stage": [
+        40,
+        40
+      ]
+    },
+    {
+      "file": "LoadBar_Zombiehead.fla",
+      "sha256": "ee8283df3be179aa82d298d787be1d55b22fff544b556b6cb498b6bdb3fb965d",
+      "contents_rect_offset": 4490,
+      "stage": [
+        80,
+        80
+      ]
+    },
+    {
+      "file": "Magnetshroom.fla",
+      "sha256": "fb4a281b0416d42a4cd34155bcf542341ac100d24613e0f14f4752bbd9f7b75e",
+      "contents_rect_offset": 25483,
+      "stage": [
+        80,
+        80
+      ]
+    },
+    {
+      "file": "Marigold.fla",
+      "sha256": "9d0c6e19843e26958447f1e901cd730c78963651c2596ea7d1a52ecd24bd3243",
+      "contents_rect_offset": 18035,
+      "stage": [
+        80,
+        80
+      ]
+    },
+    {
+      "file": "Melonpult.fla",
+      "sha256": "467e78c971b15091471c9810b9fb82c1aa46613dc611053ae0317a48c561172e",
+      "contents_rect_offset": 11992,
+      "stage": [
+        80,
+        80
+      ]
+    },
+    {
+      "file": "PeaShooter.fla",
+      "sha256": "f0b8f8002c954e98a90fd1dd89ec3247f95035e4b2de610d108307492b52d3c2",
+      "contents_rect_offset": 19642,
+      "stage": [
+        80,
+        80
+      ]
+    },
+    {
+      "file": "PeaShooterSingle.fla",
+      "sha256": "294c3ba2bf88efb0c814ec73ded3e80da9a8fb3164c93b98c1dced70e275d071",
+      "contents_rect_offset": 14821,
+      "stage": [
+        80,
+        80
+      ]
+    },
+    {
+      "file": "Plantern.fla",
+      "sha256": "6dfd5ca8f9ef0efa5eaa824da465f7ffd6e678ce0eab7571ec65399651b6c516",
+      "contents_rect_offset": 6237,
+      "stage": [
+        80,
+        80
+      ]
+    },
+    {
+      "file": "PoolCleaner.fla",
+      "sha256": "79a6ee194640e0a04e0e6e544181814828ea508b69ddc753a10933c4f44954ce",
+      "contents_rect_offset": 10442,
+      "stage": [
+        80,
+        80
+      ]
+    },
+    {
+      "file": "Portal_Circle.fla",
+      "sha256": "a5e6f8a0585e99caa3f61d4719576936d16a0c4a140956bda6f39c4746a9efa4",
+      "contents_rect_offset": 2842,
+      "stage": [
+        100,
+        300
+      ]
+    },
+    {
+      "file": "Portal_Square.fla",
+      "sha256": "8d8f02b65d45083dc6618978d965e6cdb25373e1cac903623aab06fd1b5e9a29",
+      "contents_rect_offset": 2201,
+      "stage": [
+        100,
+        300
+      ]
+    },
+    {
+      "file": "Pot.fla",
+      "sha256": "55894469ddde4f7b5736c1d51a72ff40e94c8a0719e05c54d4ed7feab9d8a29a",
+      "contents_rect_offset": 6314,
+      "stage": [
+        80,
+        80
+      ]
+    },
+    {
+      "file": "PotatoMine.fla",
+      "sha256": "a7aa833ea5f0743b754112759a3e2fa08a5c1d0a1d1012599d81ce29003ef995",
+      "contents_rect_offset": 9609,
+      "stage": [
+        80,
+        80
+      ]
+    },
+    {
+      "file": "Puff.fla",
+      "sha256": "a3a84b5f8292fa10ff0541a1e3cc276feee9d6f4cdba45d5e5c377bc9b9f4389",
+      "contents_rect_offset": 5673,
+      "stage": [
+        200,
+        200
+      ]
+    },
+    {
+      "file": "PuffShroom.fla",
+      "sha256": "a80feeba06a4a028c778085c8c2d9b124f13ea998e19b6cc56fdab11f6ea36cd",
+      "contents_rect_offset": 5809,
+      "stage": [
+        80,
+        80
+      ]
+    },
+    {
+      "file": "Pumpkin.fla",
+      "sha256": "a8467dcd79040bd273f9a34b5605e437e560b5cfc3457ebfbf51314fe4676923",
+      "contents_rect_offset": 3715,
+      "stage": [
+        80,
+        80
+      ]
+    },
+    {
+      "file": "Rain_circle.fla",
+      "sha256": "e1746ec42109f0a8b4cc150e4e1990c37d5030f8fa194e0cc7d0b8db46abf0f7",
+      "contents_rect_offset": 1065,
+      "stage": [
+        20,
+        20
+      ]
+    },
+    {
+      "file": "Rain_splash.fla",
+      "sha256": "ac788cf77bc72142d412df1c219237ec27726a4301c59fcfbd6bd0bf1c1af936",
+      "contents_rect_offset": 2898,
+      "stage": [
+        20,
+        20
+      ]
+    },
+    {
+      "file": "Rake.fla",
+      "sha256": "46b45d424d8a97de24c1eabbf022966026719ee7c5eaf9e27b73724d7713e447",
+      "contents_rect_offset": 2221,
+      "stage": [
+        80,
+        80
+      ]
+    },
+    {
+      "file": "RoofCleaner.fla",
+      "sha256": "1f1f103051516c9fc06ac23fd6ec05a0a5c1604382926a20147763219fe0f650",
+      "contents_rect_offset": 7535,
+      "stage": [
+        80,
+        80
+      ]
+    },
+    {
+      "file": "ScaredyShroom.fla",
+      "sha256": "46abf3d6c4fc6e4353c7fc90c5086577e92d68bf2593d1b8d3902696cabad0cf",
+      "contents_rect_offset": 8635,
+      "stage": [
+        80,
+        80
+      ]
+    },
+    {
+      "file": "SeaShroom.fla",
+      "sha256": "143a71fc7258390dfaa4530320188edc8ea88e52c178bd6ce202b90f47a36531",
+      "contents_rect_offset": 8771,
+      "stage": [
+        80,
+        80
+      ]
+    },
+    {
+      "file": "SelectorScreen.fla",
+      "sha256": "ec6ae255c4240c4c6e9326c58c44ab9cc969e1f6dea86cead7bb3c023eb5f9a4",
+      "contents_rect_offset": 28170,
+      "stage": [
+        800,
+        600
+      ]
+    },
+    {
+      "file": "SelectorScreen_WoodSign.fla",
+      "sha256": "675d8224ba2af53dcbb22f61fc994e71b2d8fa927e7c320dc9dfe267d11cba54",
+      "contents_rect_offset": 4360,
+      "stage": [
+        800,
+        600
+      ]
+    },
+    {
+      "file": "SlotMachine.fla",
+      "sha256": "d403947d1ba9568e1140843f46f0c9e3cd2894848672ef527902071f408a67e1",
+      "contents_rect_offset": 3415,
+      "stage": [
+        500,
+        200
+      ]
+    },
+    {
+      "file": "SnowPea.fla",
+      "sha256": "459fbbc103e3fc4588cc06c5734d45c6233b2d63dcef7b040cb321120dac7611",
+      "contents_rect_offset": 14205,
+      "stage": [
+        80,
+        80
+      ]
+    },
+    {
+      "file": "SodRoll.fla",
+      "sha256": "58f1ed2f088d62e32327298611ff7a0a5fcae0d8aa36a338a62d2aceff59a427",
+      "contents_rect_offset": 3613,
+      "stage": [
+        800,
+        600
+      ]
+    },
+    {
+      "file": "SpikeRock.fla",
+      "sha256": "be999f7fc7cc2a6144a16ae88d6c5b3581bb0f07c0e4073e65507d75f4ae8a91",
+      "contents_rect_offset": 5888,
+      "stage": [
+        80,
+        80
+      ]
+    },
+    {
+      "file": "splash.fla",
+      "sha256": "5cd4b7773b26def6f15ef8d481f47773d7e70d8bf4b1feeb37abd27a3e3e852c",
+      "contents_rect_offset": 4651,
+      "stage": [
+        100,
+        80
+      ]
+    },
+    {
+      "file": "SplitPea.fla",
+      "sha256": "5c05d30ead47be682047cf9528338e431db62aef06fcd495b3f918c0e8cc7cb0",
+      "contents_rect_offset": 15467,
+      "stage": [
+        80,
+        80
+      ]
+    },
+    {
+      "file": "Squash.fla",
+      "sha256": "b28a3245afa26f4b09f5855497d1aabb0bbe181166c78ea63d61d3a4fa7be73d",
+      "contents_rect_offset": 3435,
+      "stage": [
+        80,
+        80
+      ]
+    },
+    {
+      "file": "Starfruit.fla",
+      "sha256": "afb28fe6a20b1d7b371c7554ba217bfac7529810bfb3cd4c1ced75b549867364",
+      "contents_rect_offset": 5408,
+      "stage": [
+        80,
+        80
+      ]
+    },
+    {
+      "file": "StartReadySetPlant.fla",
+      "sha256": "8cf0f676568866e3b08b976c599455deac1063c69b06047a8f2e220336ded203",
+      "contents_rect_offset": 2165,
+      "stage": [
+        800,
+        600
+      ]
+    },
+    {
+      "file": "Stinky.fla",
+      "sha256": "54fe56cc6c843edced2b1e106e2b9070bbec8c6e2a9a4eb87086158646cd5ef7",
+      "contents_rect_offset": 8830,
+      "stage": [
+        84,
+        59
+      ]
+    },
+    {
+      "file": "Sun.fla",
+      "sha256": "603f865383897b3171cc2977136877c2909817c2ceaf0e46563364b71bb09a48",
+      "contents_rect_offset": 2521,
+      "stage": [
+        200,
+        200
+      ]
+    },
+    {
+      "file": "SunFlower.fla",
+      "sha256": "754c67d8cae0e753f4391c7d970ae170b5ec5ab162a3d77beb8792ce2aca6c7a",
+      "contents_rect_offset": 20713,
+      "stage": [
+        80,
+        80
+      ]
+    },
+    {
+      "file": "SunShroom.fla",
+      "sha256": "0a750fab307b88dd495eae9c7915e9bf0bd4a40b10bf1580b4d281a6084939c2",
+      "contents_rect_offset": 4425,
+      "stage": [
+        80,
+        80
+      ]
+    },
+    {
+      "file": "Tallnut.fla",
+      "sha256": "a4e71a843c31cc51f70934200589b910ba85d5af56b43c346199f203f9206824",
+      "contents_rect_offset": 2799,
+      "stage": [
+        80,
+        80
+      ]
+    },
+    {
+      "file": "Tanglekelp.fla",
+      "sha256": "d51928280ab69693241a764f46d56cf0d74f237e1c857c82db768126fbfcb218",
+      "contents_rect_offset": 18817,
+      "stage": [
+        80,
+        80
+      ]
+    },
+    {
+      "file": "TextFadeOn.fla",
+      "sha256": "881cf6e92b8ddb182c809ceadafe5e3d8a1d7885c2ab8b6bf205765c9b853cfc",
+      "contents_rect_offset": 1512,
+      "stage": [
+        800,
+        600
+      ]
+    },
+    {
+      "file": "TextSlideDown.fla",
+      "sha256": "86fe7d102da9198e998241b90e2309376813efda881b984d8a2016af181142a8",
+      "contents_rect_offset": 1512,
+      "stage": [
+        800,
+        600
+      ]
+    },
+    {
+      "file": "TextSlideOn.fla",
+      "sha256": "d10b9282b7b0bb66c5b249554aff2839d16c3b0ccf34d664a48ffedfb74336ae",
+      "contents_rect_offset": 1512,
+      "stage": [
+        800,
+        600
+      ]
+    },
+    {
+      "file": "ThreePeater.fla",
+      "sha256": "5ff831e5b3ba975f220a87efdc2429cdeec4024217e776bc9b4865cd28bb355b",
+      "contents_rect_offset": 14293,
+      "stage": [
+        80,
+        80
+      ]
+    },
+    {
+      "file": "Torchwood.fla",
+      "sha256": "ebdd505466733c4dd5b0c8dd06a650fd6a420a1716491ce8fdfbbbfd8e69c8a7",
+      "contents_rect_offset": 5575,
+      "stage": [
+        80,
+        80
+      ]
+    },
+    {
+      "file": "TreeFood.fla",
+      "sha256": "64565dc0e8eab1d395bfd41062af0d2620ea9ac1f14a9ec2b04e5d3932adf17d",
+      "contents_rect_offset": 7393,
+      "stage": [
+        80,
+        80
+      ]
+    },
+    {
+      "file": "treeofWisdom.fla",
+      "sha256": "c1c0278eae5a7ed2430b2255e5df664ba05fbdc24239f6111f839e9473f89f85",
+      "contents_rect_offset": 15355,
+      "stage": [
+        800,
+        600
+      ]
+    },
+    {
+      "file": "TreeOfWisdomClouds.fla",
+      "sha256": "56b0762c63233cdfe1363a68d21a43203a2b3280502942943fac4b20c2db917a",
+      "contents_rect_offset": 5400,
+      "stage": [
+        800,
+        600
+      ]
+    },
+    {
+      "file": "TwinSunflower.fla",
+      "sha256": "89e11b664e95731d4b2d003d57368d41b3f180d0baf8c7e825aaf91c20d879fe",
+      "contents_rect_offset": 12397,
+      "stage": [
+        80,
+        80
+      ]
+    },
+    {
+      "file": "Umbrellaleaf.fla",
+      "sha256": "dfc2cd7abb95a6bc39c0300e8046723614659feacd713fa694336e9ffa1a3fe4",
+      "contents_rect_offset": 7831,
+      "stage": [
+        80,
+        80
+      ]
+    },
+    {
+      "file": "Wallnut.fla",
+      "sha256": "a18ee6feb0e606944b97ff5954946079e6005f04b538dc13c2335a909d77c23f",
+      "contents_rect_offset": 4535,
+      "stage": [
+        80,
+        80
+      ]
+    },
+    {
+      "file": "WinterMelon.fla",
+      "sha256": "1b3618b3c0cd9c1d06f9637f01e3636f2b5a15ce02331e8d31adf79bc94fa719",
+      "contents_rect_offset": 17250,
+      "stage": [
+        80,
+        80
+      ]
+    },
+    {
+      "file": "Z.fla",
+      "sha256": "420ef8c52543e527494a716fddcb9ecfe10c2680240b3d8d00d1f04780da1797",
+      "contents_rect_offset": 1698,
+      "stage": [
+        30,
+        60
+      ]
+    },
+    {
+      "file": "ZenGarden_bugspray.fla",
+      "sha256": "c26f220594fd09355a25384added445a8e58064fd3de18053a655cf0ad679356",
+      "contents_rect_offset": 4590,
+      "stage": [
+        80,
+        80
+      ]
+    },
+    {
+      "file": "ZenGarden_fertilizer.fla",
+      "sha256": "d12a74487340ecefa235f621d92f9969bc3bac5a999fb0e9d7882506b3b64f0a",
+      "contents_rect_offset": 7332,
+      "stage": [
+        80,
+        80
+      ]
+    },
+    {
+      "file": "ZenGarden_phonograph.fla",
+      "sha256": "8ee3e2bfdfe95423954ed1f46e8dbcc49c9fe412466f049d404ec2a0c6387470",
+      "contents_rect_offset": 4584,
+      "stage": [
+        80,
+        80
+      ]
+    },
+    {
+      "file": "ZenGarden_sprout.fla",
+      "sha256": "e2026391cc5e812278cf6d77309cfa055ae5252fa831a057b1a64fa352df58b8",
+      "contents_rect_offset": 8165,
+      "stage": [
+        80,
+        80
+      ]
+    },
+    {
+      "file": "ZenGarden_wateringcan.fla",
+      "sha256": "a0e9225eddc5005a38ca7b4c73596096e6bbcee1841cd20f8953a1db2f74e58e",
+      "contents_rect_offset": 13655,
+      "stage": [
+        80,
+        80
+      ]
+    },
+    {
+      "file": "zombatar_zombie_head.fla",
+      "sha256": "3a1778e81cd8d3f4e5808c30b45bedae774cbc418d9d92af5f641093c97cf6a3",
+      "contents_rect_offset": 108493,
+      "stage": [
+        80,
+        80
+      ]
+    },
+    {
+      "file": "Zombie.fla",
+      "sha256": "73a9c059279f6af8d7ec8d0da3780d341b1d98580b10fe00fbac4f4ca487a387",
+      "contents_rect_offset": 34892,
+      "stage": [
+        80,
+        139
+      ]
+    },
+    {
+      "file": "Zombie_backup.fla",
+      "sha256": "5478f1315be9700991e4073316176c9803ac28e0225fc1dc1decf5e09be11db0",
+      "contents_rect_offset": 17967,
+      "stage": [
+        80,
+        139
+      ]
+    },
+    {
+      "file": "Zombie_balloon.fla",
+      "sha256": "025e41bb534cb3398a058c4e7436b743e92734a24d2e70d76cb5d6739a0b9392",
+      "contents_rect_offset": 18659,
+      "stage": [
+        80,
+        139
+      ]
+    },
+    {
+      "file": "Zombie_bobsled.fla",
+      "sha256": "4c4925edfd33747d4e65539ac697607091b87eb9b548dc9c2c06c89693123172",
+      "contents_rect_offset": 21125,
+      "stage": [
+        80,
+        139
+      ]
+    },
+    {
+      "file": "Zombie_boss.fla",
+      "sha256": "e560cb87345dd5156de0b42e2ad2735b0f681dd49842d3f9d0516cc5151c6d7a",
+      "contents_rect_offset": 39411,
+      "stage": [
+        800,
+        600
+      ]
+    },
+    {
+      "file": "Zombie_Boss_driver.fla",
+      "sha256": "abe994d26c25c93096c48098848afa1b1b831de785a57bd2508dcf1ad7fecb0f",
+      "contents_rect_offset": 18712,
+      "stage": [
+        80,
+        139
+      ]
+    },
+    {
+      "file": "Zombie_boss_fireball.fla",
+      "sha256": "c16abf5c412236b4c88270a6603a19dbf40593663fcbe52e986b33442be27059",
+      "contents_rect_offset": 7935,
+      "stage": [
+        200,
+        200
+      ]
+    },
+    {
+      "file": "Zombie_boss_iceball.fla",
+      "sha256": "06f26414be890e0475d7c516ac1604ec5bc82f1daabbb46e88e272bcbefc1b54",
+      "contents_rect_offset": 8636,
+      "stage": [
+        200,
+        200
+      ]
+    },
+    {
+      "file": "Zombie_bungi.fla",
+      "sha256": "7541695eb461efcaaed666447b79b4cdd68ff75eb9980470d056b72ea1d2e82e",
+      "contents_rect_offset": 19143,
+      "stage": [
+        80,
+        139
+      ]
+    },
+    {
+      "file": "Zombie_catapult.fla",
+      "sha256": "dba3d03b62630fffe61c7a72a380c3cc1c20af8baf40fe3824f5e5c44aaa143c",
+      "contents_rect_offset": 29053,
+      "stage": [
+        160,
+        139
+      ]
+    },
+    {
+      "file": "Zombie_charred.fla",
+      "sha256": "d6dc3db397a05b881a2830c0fd4a00d5530f80e2257823c9ff1e51b928f410e0",
+      "contents_rect_offset": 14144,
+      "stage": [
+        80,
+        139
+      ]
+    },
+    {
+      "file": "Zombie_charred_catapult.fla",
+      "sha256": "ca7f4cd7d69438e670e36ff0ea36c8c46ea67f74a9f8dc686931c368a4f97687",
+      "contents_rect_offset": 11723,
+      "stage": [
+        160,
+        139
+      ]
+    },
+    {
+      "file": "Zombie_charred_digger.fla",
+      "sha256": "265895b0daf5615d2f985e27539d016220d3cb2ae4b66f5bcb8726f66561c2f3",
+      "contents_rect_offset": 15153,
+      "stage": [
+        80,
+        139
+      ]
+    },
+    {
+      "file": "Zombie_charred_gargantuar.fla",
+      "sha256": "a169c9de75866423ba4a8dfeaf14b67b84e84e44ffd0d4a968b66a88f20a848b",
+      "contents_rect_offset": 15297,
+      "stage": [
+        80,
+        139
+      ]
+    },
+    {
+      "file": "Zombie_charred_imp.fla",
+      "sha256": "e7688b6a36a5a8e4890b55b5e759c89b11a7dbf2528c1dec376ed054f19f67fe",
+      "contents_rect_offset": 9540,
+      "stage": [
+        80,
+        139
+      ]
+    },
+    {
+      "file": "Zombie_charred_zamboni.fla",
+      "sha256": "d45daa49e9911e4db6272f06e2ae8021ec3f37733637d247cad96751663d1286",
+      "contents_rect_offset": 15943,
+      "stage": [
+        80,
+        139
+      ]
+    },
+    {
+      "file": "Zombie_credits_conehead.fla",
+      "sha256": "406fbb3448929c10cb651b825e5caa635e6b8ccd9f5bd3a347c65b7a5baea9db",
+      "contents_rect_offset": 33033,
+      "stage": [
+        80,
+        139
+      ]
+    },
+    {
+      "file": "Zombie_credits_dance.fla",
+      "sha256": "9278f047e16278f204965f28ceff2476129eea3cc862288b47ac798d39523528",
+      "contents_rect_offset": 20498,
+      "stage": [
+        80,
+        139
+      ]
+    },
+    {
+      "file": "Zombie_credits_screendoor.fla",
+      "sha256": "65b4448042a508d804e4c29ba2775ea3e6c818e9babbf0ce598e22250bf1ac19",
+      "contents_rect_offset": 33033,
+      "stage": [
+        80,
+        139
+      ]
+    },
+    {
+      "file": "Zombie_dancer.fla",
+      "sha256": "89e9151a8a4603278eb2f406c6dc00fe318e75e1eec031e6fa64d79bccdd5b89",
+      "contents_rect_offset": 24685,
+      "stage": [
+        80,
+        139
+      ]
+    },
+    {
+      "file": "Zombie_digger.fla",
+      "sha256": "8e7f83faf0098680c59c776f79353df11d7cd75eadbfe6e252509410341955af",
+      "contents_rect_offset": 22843,
+      "stage": [
+        80,
+        139
+      ]
+    },
+    {
+      "file": "Zombie_disco.fla",
+      "sha256": "50f541a82a47987a901bc40896e3bb8d780e422f44df305d1c0263737e6fb01e",
+      "contents_rect_offset": 21244,
+      "stage": [
+        80,
+        139
+      ]
+    },
+    {
+      "file": "Zombie_dolphinrider.fla",
+      "sha256": "d7c9ad5fc2dae0a45443de587a5722337918051b14f6a2638a66f3c45fa8b553",
+      "contents_rect_offset": 22737,
+      "stage": [
+        80,
+        139
+      ]
+    },
+    {
+      "file": "Zombie_flagpole.fla",
+      "sha256": "2de3da5c19cc5fa26ea0fa5c19dc6bbb4daebea7da473212081d57db387cf05f",
+      "contents_rect_offset": 2231,
+      "stage": [
+        550,
+        400
+      ]
+    },
+    {
+      "file": "Zombie_football.fla",
+      "sha256": "9949807379d22d0ec833718820cf5798f7d26a10dbe2d07148369184af4d85ae",
+      "contents_rect_offset": 18873,
+      "stage": [
+        80,
+        139
+      ]
+    },
+    {
+      "file": "Zombie_gargantuar.fla",
+      "sha256": "d70669b312095adec50ccb86a3512c23e90a4f291dd0e10fabe01132a350a748",
+      "contents_rect_offset": 33853,
+      "stage": [
+        80,
+        139
+      ]
+    },
+    {
+      "file": "Zombie_hand.fla",
+      "sha256": "784849668997a2be582b8cdc3471bdae55659e464b8e37d78a48f3f6250e5a5a",
+      "contents_rect_offset": 13602,
+      "stage": [
+        800,
+        600
+      ]
+    },
+    {
+      "file": "Zombie_imp.fla",
+      "sha256": "278734df382250533cc67c58c6411807a0ca50938c6ae03457b4ed2f36ebd8d5",
+      "contents_rect_offset": 12709,
+      "stage": [
+        80,
+        139
+      ]
+    },
+    {
+      "file": "Zombie_jackbox.fla",
+      "sha256": "449ca9e6a9e8231d988787b8a52db12e06b685e0b7330a4cc014d87d614ccfb0",
+      "contents_rect_offset": 35252,
+      "stage": [
+        80,
+        139
+      ]
+    },
+    {
+      "file": "Zombie_Jackson.fla",
+      "sha256": "3e72879b2eaffafa6d44fbec952883eb6f0a9ff751973633b220c2f3bee34659",
+      "contents_rect_offset": 18757,
+      "stage": [
+        80,
+        139
+      ]
+    },
+    {
+      "file": "Zombie_ladder.fla",
+      "sha256": "6a5e8433833b48157e597cf14c318b2761599d9f0baa1d438130341ef389342b",
+      "contents_rect_offset": 20565,
+      "stage": [
+        80,
+        139
+      ]
+    },
+    {
+      "file": "Zombie_paper.fla",
+      "sha256": "f6adf4ff2aba4e6473f349228396ce25194b67371d4ee8d2be6fefcf380ee8ae",
+      "contents_rect_offset": 18920,
+      "stage": [
+        80,
+        139
+      ]
+    },
+    {
+      "file": "Zombie_pogo.fla",
+      "sha256": "85e4135da6d7913c6a0d8c2f651172cffb70bae5be9b7a34a7639269c3d015d2",
+      "contents_rect_offset": 20359,
+      "stage": [
+        80,
+        139
+      ]
+    },
+    {
+      "file": "Zombie_polevaulter.fla",
+      "sha256": "5f991e9288188ad7a2e760722619794da783b2d1a52622b017a53d8920977898",
+      "contents_rect_offset": 17141,
+      "stage": [
+        80,
+        139
+      ]
+    },
+    {
+      "file": "Zombie_snorkle.fla",
+      "sha256": "0a60c5b7a0e446679641b717d440d14a06e86b480a047a146362994b95ae13b9",
+      "contents_rect_offset": 35981,
+      "stage": [
+        80,
+        139
+      ]
+    },
+    {
+      "file": "Zombie_surprise.fla",
+      "sha256": "8dbae01519a0b4fee3ab8a47277686cceaad4351623745fecbbb27b339fc3abf",
+      "contents_rect_offset": 1195,
+      "stage": [
+        80,
+        80
+      ]
+    },
+    {
+      "file": "Zombie_Target.fla",
+      "sha256": "3c1da230f6c2bfc10b577ce680303f1cc9ac7b63472614b59a13ca9d1d398eef",
+      "contents_rect_offset": 16237,
+      "stage": [
+        80,
+        139
+      ]
+    },
+    {
+      "file": "Zombie_yeti.fla",
+      "sha256": "27e93563a170b67e732e8f96f58778015d06be8e6623d03bfff3fa806407b0c8",
+      "contents_rect_offset": 13244,
+      "stage": [
+        80,
+        139
+      ]
+    },
+    {
+      "file": "Zombie_zamboni.fla",
+      "sha256": "41fc054e274a936cbcfa67fa1f7c2d166ca3a43d89e2776de9ba1b3c55146e27",
+      "contents_rect_offset": 18674,
+      "stage": [
+        80,
+        139
+      ]
+    },
+    {
+      "file": "ZombiesWon.fla",
+      "sha256": "fd57bae10ba7c7d94ed1588810a59e799a97b6d372929c9ee357ab5fb1001e4f",
+      "contents_rect_offset": 2843,
+      "stage": [
+        800,
+        600
+      ]
+    }
+  ]
+}

@@ -1,0 +1,50 @@
+static int run_loader(int argc,char**argv){
+ if(argc<4){cerr<<"usage: loader catalog.tsv resource_root compiled...\n";return 2;}
+ gRoot=fs::u8path(argv[2]);
+ ifstream cat(fs::u8path(argv[1]));string line;
+ while(getline(cat,line)){if(!line.empty()&&line.back()=='\r')line.pop_back();if(line.size()>2){auto separator=line.find('\t',2);auto id=line.substr(2,separator-2);if(line[0]=='I')gImages[id]=separator==string::npos?string():line.substr(separator+1);if(line[0]=='F')gFonts.insert(id);}}
+ cout<<"schema="<<hex<<DefinitionCalcHash(&gReanimatorDefMap)<<dec<<" native_def="<<sizeof(ReanimatorDefinition)<<" native_track="<<sizeof(ReanimatorTrack)<<" native_transform="<<sizeof(ReanimatorTransform)<<'\n';
+ int failures=0;
+ for(int a=3;a<argc;a++){
+  ReanimatorDefinition d;gLoadCalls=gLoadFailures=0;
+  bool ok=ReanimationLoadDefinition(argv[a],&d);
+  cout<<"FILE\t"<<argv[a]<<"\tloaded="<<ok<<"\ttracks="<<d.mTrackCount<<"\tfps="<<d.mFPS<<"\tfallback_calls="<<gLoadCalls<<"\tfallback_misses="<<gLoadFailures<<'\n';
+  if(!ok){++failures;continue;}
+  Reanimation anim{&d};
+  for(int i=0;i<d.mTrackCount;i++){
+   auto&t=d.mTracks[i];int first=-1,last=-1;
+   for(int f=0;f<t.mTransformCount;f++)if(t.mTransforms[f].mFrame>=0){if(first<0)first=f;last=f;}
+   int engineStart,engineCount;anim.GetFramesForLayer(t.mName,engineStart,engineCount);
+   cout<<"TRACK\t"<<t.mName<<"\tengine_clip="<<engineStart<<":"<<engineCount<<"\tframes="<<t.mTransformCount<<"\tactive="<<first<<":"<<last<<'\n';
+   // Resolve image identity after the game's own missing-value expansion.
+   // Invisible cached image references are deliberately outside this check.
+   int spanStart=-1;string spanPath;
+   for(int f=0;f<=t.mTransformCount;f++){
+    bool active=f<t.mTransformCount&&t.mTransforms[f].mFrame>=0;
+    string path=active&&t.mTransforms[f].mImage?t.mTransforms[f].mImage->mResolvedPath:string();
+    if(spanStart>=0&&(!active||path!=spanPath)){
+     cout<<"IMAGE_SPAN\t"<<i<<"\t"<<spanStart<<":"<<(f-1)<<"\t"<<spanPath<<'\n';spanStart=-1;
+    }
+    if(active&&spanStart<0){spanStart=f;spanPath=path;}
+   }
+  }
+ }
+ return failures?1:0;
+}
+
+#ifdef _WIN32
+int wmain(int argc,wchar_t**nativeArgs){
+ try{
+  vector<string> utf8;utf8.reserve(argc);
+  for(int i=0;i<argc;i++){
+   auto encoded=fs::path(nativeArgs[i]).u8string();
+   utf8.emplace_back(reinterpret_cast<const char*>(encoded.data()),encoded.size());
+  }
+  vector<char*> args;args.reserve(argc);
+  for(auto&arg:utf8)args.push_back(arg.data());
+  return run_loader(argc,args.data());
+ }catch(const std::exception&error){cerr<<"HARNESS_ERROR\t"<<error.what()<<'\n';return 2;}
+}
+#else
+int main(int argc,char**argv){return run_loader(argc,argv);}
+#endif

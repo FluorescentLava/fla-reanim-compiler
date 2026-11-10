@@ -1,0 +1,17 @@
+{
+  "fixture": "adobe-raw-bitmap.dat",
+  "source_file": "Chomper.fla",
+  "source_fla_sha256": "9f54d63149cf9b118c4825c8e7952bee606c65a3bfd443270ac915a94ca70ef2",
+  "source_library_item": "Chomper_stem3.png",
+  "source_dat_member": "bin/Media 10.dat",
+  "fixture_sha256": "c1cb26d00cc8b58f8486f3d04161c9cdba4062a3381cab1a5520d30aecc91167",
+  "width": 10,
+  "height": 8,
+  "row_stride": 40,
+  "header_bytes": 26,
+  "compression_flag_offset": 25,
+  "compression_flag": 0,
+  "pixels": "premultiplied ARGB; independently converted to straight RGBA in Python with integer round-to-nearest",
+  "decoded_rgba_sha256": "bb9254751ccbc877bae6f11a1294b60ef7df991f31905d87d2c14128e9389b96",
+  "bytes": 346
+}
