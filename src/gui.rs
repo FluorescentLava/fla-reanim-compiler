@@ -9,8 +9,9 @@ use naui_winui3::{
     Microsoft::UI::{
         Dispatching::DispatcherQueueTimer,
         Xaml::{
-            self, Application, ApplicationInitializationCallback, Controls::*, DragEventHandler,
-            FrameworkElement, Markup::XamlReader, Media::MicaBackdrop, RoutedEventHandler, Window,
+            self, Application, ApplicationInitializationCallback, Controls::*, DragEventArgs,
+            DragEventHandler, DragOperationDeferral, FrameworkElement, Markup::XamlReader,
+            Media::MicaBackdrop, RoutedEventHandler, Window,
         },
     },
 };
@@ -19,6 +20,7 @@ use std::{
     path::PathBuf,
     rc::Rc,
     sync::mpsc::{self, Receiver, Sender},
+    time::{Duration, Instant},
 };
 use windows::{
     ApplicationModel::DataTransfer::{DataPackageOperation, StandardDataFormats},
@@ -40,7 +42,7 @@ use windows::{
     },
     core::{HSTRING, Interface, Result, w},
 };
-use windows_future::AsyncOperationCompletedHandler;
+use windows_future::{AsyncOperationCompletedHandler, IAsyncOperation};
 
 #[link(name = "user32")]
 unsafe extern "system" {
@@ -63,9 +65,30 @@ fn with_ui(action: impl FnOnce(&Ui) -> Result<()>) -> Result<()> {
     }
 }
 enum Event {
-    Dropped(Vec<PathBuf>),
+    DropReady,
     Log(String, bool),
     Finished,
+}
+type DroppedItems = windows_collections::IVectorView<windows::Storage::IStorageItem>;
+
+// WinUI's deferral is apartment-bound. Keep it and the storage operation on
+// the UI thread; the asynchronous callback sends only a completion signal.
+struct PendingDrop {
+    operation: IAsyncOperation<DroppedItems>,
+    deferral: DragOperationDeferral,
+}
+impl Drop for PendingDrop {
+    fn drop(&mut self) {
+        let _ = self.deferral.Complete();
+    }
+}
+#[derive(Clone, Copy)]
+struct StatusTween {
+    started: Instant,
+    from_height: f64,
+    to_height: f64,
+    from_opacity: f64,
+    to_opacity: f64,
 }
 struct Ui {
     window: Window,
@@ -77,10 +100,17 @@ struct Ui {
     strict: CheckBox,
     log: TextBox,
     status: InfoBar,
+    status_popup: ScrollViewer,
+    status_content: Grid,
+    status_tween: Cell<Option<StatusTween>>,
+    status_timer: DispatcherQueueTimer,
     progress: ProgressBar,
     sender: Sender<Event>,
     receiver: RefCell<Receiver<Event>>,
+    pending_drop: RefCell<Option<PendingDrop>>,
     busy: RefCell<bool>,
+    busy_visual_at: Cell<Option<Instant>>,
+    busy_visual_active: Cell<bool>,
     operation: Cell<Operation>,
     timer: DispatcherQueueTimer,
     _pane_footer: pane_footer::PaneFooterAnimation,
@@ -113,6 +143,8 @@ impl Ui {
         }
         let timer = window.DispatcherQueue()?.CreateTimer()?;
         timer.SetInterval(TimeSpan { Duration: 500_000 })?;
+        let status_timer = window.DispatcherQueue()?.CreateTimer()?;
+        status_timer.SetInterval(TimeSpan { Duration: 160_000 })?;
         let (sender, receiver) = mpsc::channel();
         let pane_footer =
             pane_footer::PaneFooterAnimation::new(&page.cast()?, find(&page, "FormatPanel")?)?;
@@ -123,13 +155,20 @@ impl Ui {
             strict: find(&page, "StrictCheck")?,
             log: find(&page, "LogText")?,
             status: find(&page, "Status")?,
+            status_popup: find(&page, "StatusPopup")?,
+            status_content: find(&page, "StatusContent")?,
+            status_tween: Cell::new(None),
+            status_timer,
             progress: find(&page, "Progress")?,
             window,
             page,
             hwnd,
             sender,
             receiver: RefCell::new(receiver),
+            pending_drop: RefCell::new(None),
             busy: RefCell::new(false),
+            busy_visual_at: Cell::new(None),
+            busy_visual_active: Cell::new(false),
             operation: Cell::new(Operation::Pack),
             timer,
             _pane_footer: pane_footer,
@@ -170,6 +209,9 @@ impl Ui {
         clear.Click(&RoutedEventHandler::new(|_, _| {
             with_ui(|ui| ui.log.SetText(&HSTRING::new()))
         }))?;
+        find::<Button>(&self.page, "DismissStatus")?.Click(&RoutedEventHandler::new(|_, _| {
+            with_ui(|ui| ui.hide_status())
+        }))?;
         let navigation: NavigationView = self.page.cast()?;
         navigation.SelectionChanged(&TypedEventHandler::new(
             |_, args: windows_core::Ref<NavigationViewSelectionChangedEventArgs>| {
@@ -194,47 +236,32 @@ impl Ui {
         let drop: Border = find(&self.page, "DropSurface")?;
         drop.DragOver(&DragEventHandler::new(|_, args| {
             with_ui(|ui| {
-                if !*ui.busy.borrow() {
-                    args.as_ref()
-                        .unwrap()
-                        .SetAcceptedOperation(DataPackageOperation::Copy)?;
+                if !*ui.busy.borrow()
+                    && ui.pending_drop.borrow().is_none()
+                    && let Some(args) = args.as_ref()
+                {
+                    args.SetAcceptedOperation(DataPackageOperation::Copy)?;
                 }
                 Ok(())
             })
         }))?;
         drop.Drop(&DragEventHandler::new(|_, args| {
             with_ui(|ui| {
-                if *ui.busy.borrow() {
-                    return Ok(());
+                if let Some(args) = args.as_ref()
+                    && let Err(error) = ui.begin_drop(args)
+                {
+                    let _ = ui
+                        .sender
+                        .send(Event::Log(format!("读取拖入文件失败：{error}"), true));
                 }
-                let args = args.as_ref().unwrap();
-                let data = args.DataView()?;
-                if !data.Contains(&StandardDataFormats::StorageItems()?)? {
-                    return Ok(());
-                }
-                let sender = ui.sender.clone();
-                let deferral = args.GetDeferral()?;
-                data.GetStorageItemsAsync()?
-                    .SetCompleted(&AsyncOperationCompletedHandler::<
-                        windows_collections::IVectorView<windows::Storage::IStorageItem>,
-                    >::new(move |op, _| {
-                        if let Some(op) = op.as_ref()
-                            && let Ok(items) = op.GetResults()
-                        {
-                            let paths = items
-                                .into_iter()
-                                .filter_map(|i| i.Path().ok().map(|p| PathBuf::from(p.to_string())))
-                                .collect();
-                            let _ = sender.send(Event::Dropped(paths));
-                        }
-                        deferral.Complete()?;
-                        Ok(())
-                    }))?;
                 Ok(())
             })
         }))?;
         self.timer
             .Tick(&TypedEventHandler::new(|_, _| with_ui(|ui| ui.poll())))?;
+        self.status_timer.Tick(&TypedEventHandler::new(|_, _| {
+            with_ui(|ui| ui.animate_status())
+        }))?;
         self.window.AppWindow()?.Closing(&TypedEventHandler::<
             _,
             naui_winui3::Microsoft::UI::Windowing::AppWindowClosingEventArgs,
@@ -242,13 +269,64 @@ impl Ui {
             with_ui(|ui| {
                 if *ui.busy.borrow() {
                     args.as_ref().unwrap().SetCancel(true)?;
-                    ui.status.SetTitle(&hs("正在转换，请等待当前批次完成"))?;
-                    ui.status.SetIsOpen(true)?;
+                    ui.show_status(
+                        "正在转换，请等待当前批次完成",
+                        "",
+                        InfoBarSeverity::Informational,
+                    )?;
                 }
                 Ok(())
             })
         }))?;
         Ok(())
+    }
+    fn begin_drop(&self, args: &DragEventArgs) -> Result<()> {
+        if *self.busy.borrow() || self.pending_drop.borrow().is_some() {
+            return Ok(());
+        }
+        let data = args.DataView()?;
+        if !data.Contains(&StandardDataFormats::StorageItems()?)? {
+            return Ok(());
+        }
+        let pending = PendingDrop {
+            operation: data.GetStorageItemsAsync()?,
+            deferral: args.GetDeferral()?,
+        };
+        let sender = self.sender.clone();
+        pending
+            .operation
+            .SetCompleted(&AsyncOperationCompletedHandler::<DroppedItems>::new(
+                move |_, _| {
+                    let _ = sender.send(Event::DropReady);
+                    Ok(())
+                },
+            ))?;
+        *self.pending_drop.borrow_mut() = Some(pending);
+        Ok(())
+    }
+    fn finish_drop(&self) -> Result<()> {
+        let Some(pending) = self.pending_drop.borrow_mut().take() else {
+            return Ok(());
+        };
+        let paths = (|| -> Result<Vec<PathBuf>> {
+            let items = pending.operation.GetResults()?;
+            let mut paths = Vec::new();
+            for index in 0..items.Size()? {
+                paths.push(PathBuf::from(items.GetAt(index)?.Path()?.to_string()));
+            }
+            Ok(paths)
+        })();
+        // Complete and release WinUI objects here, before starting conversion.
+        drop(pending);
+        match paths {
+            Ok(paths) => self.start(paths),
+            Err(error) => {
+                let _ = self
+                    .sender
+                    .send(Event::Log(format!("读取拖入文件失败：{error}"), true));
+                Ok(())
+            }
+        }
     }
     fn select_operation(&self, operation: Operation) -> Result<()> {
         self.operation.set(operation);
@@ -301,6 +379,20 @@ impl Ui {
     }
     fn set_busy(&self, busy: bool) -> Result<()> {
         *self.busy.borrow_mut() = busy;
+        if busy {
+            // Short conversions should not flash the whole set of controls
+            // through disabled/enabled styles or briefly show a progress bar.
+            self.busy_visual_at
+                .set(Some(Instant::now() + Duration::from_millis(150)));
+        } else {
+            self.busy_visual_at.set(None);
+            if self.busy_visual_active.replace(false) {
+                self.apply_busy_visual(false)?;
+            }
+        }
+        Ok(())
+    }
+    fn apply_busy_visual(&self, busy: bool) -> Result<()> {
         self.pick.SetIsEnabled(!busy)?;
         self.pick_folder.SetIsEnabled(!busy)?;
         self.plus.SetIsEnabled(!busy)?;
@@ -308,11 +400,64 @@ impl Ui {
         for name in ["PackItem", "UnpackItem", "TvItem"] {
             find::<NavigationViewItem>(&self.page, name)?.SetIsEnabled(!busy)?;
         }
-        self.progress.SetVisibility(if busy {
-            Xaml::Visibility::Visible
-        } else {
-            Xaml::Visibility::Collapsed
+        // Reserve the bar's space so that starting/finishing never moves text.
+        self.progress.SetIsIndeterminate(busy)?;
+        self.progress.SetOpacity(if busy { 1.0 } else { 0.0 })?;
+        Ok(())
+    }
+    fn show_status(&self, title: &str, message: &str, severity: InfoBarSeverity) -> Result<()> {
+        self.status.SetSeverity(severity)?;
+        self.status.SetTitle(&hs(title))?;
+        self.status.SetMessage(&hs(message))?;
+        self.status_popup.SetIsHitTestVisible(true)?;
+        self.status_content.Measure(windows::Foundation::Size {
+            Width: self.status_popup.ActualWidth()? as f32,
+            Height: f32::INFINITY,
         })?;
+        self.transition_status(self.status_content.DesiredSize()?.Height as f64, 1.0)
+    }
+    fn hide_status(&self) -> Result<()> {
+        self.status_popup.SetIsHitTestVisible(false)?;
+        self.transition_status(0.0, 0.0)
+    }
+    fn transition_status(&self, height: f64, opacity: f64) -> Result<()> {
+        let from_height = self.status_popup.ActualHeight()?;
+        let from_opacity = self.status_content.Opacity()?;
+        if (height - from_height).abs() < 0.1 && (opacity - from_opacity).abs() < 0.001 {
+            self.status_tween.set(None);
+            self.status_timer.Stop()?;
+            return Ok(());
+        }
+        // Animate the real layout height, including the notice's top spacing.
+        // The ScrollViewer clips partially revealed content during insertion.
+        self.status_popup.SetHeight(from_height)?;
+        self.status_tween.set(Some(StatusTween {
+            started: Instant::now(),
+            from_height,
+            to_height: height,
+            from_opacity,
+            to_opacity: opacity,
+        }));
+        self.status_timer.Start()
+    }
+    fn animate_status(&self) -> Result<()> {
+        let Some(tween) = self.status_tween.get() else {
+            return Ok(());
+        };
+        let progress = (tween.started.elapsed().as_secs_f64() / 0.22).min(1.0);
+        let eased = 1.0 - (1.0 - progress).powi(3);
+        self.status_popup
+            .SetHeight(tween.from_height + (tween.to_height - tween.from_height) * eased)?;
+        self.status_content
+            .SetOpacity(tween.from_opacity + (tween.to_opacity - tween.from_opacity) * eased)?;
+        if progress >= 1.0 {
+            self.status_tween.set(None);
+            self.status_timer.Stop()?;
+            if tween.to_opacity > 0.0 {
+                // Once open, follow wrapping and window resizing naturally.
+                self.status_popup.SetHeight(f64::NAN)?;
+            }
+        }
         Ok(())
     }
     fn pick_files(&self, folders: bool) -> Result<Option<Vec<PathBuf>>> {
@@ -362,7 +507,7 @@ impl Ui {
             return Ok(());
         }
         self.set_busy(true)?;
-        self.status.SetIsOpen(false)?;
+        self.hide_status()?;
         let operation = self.operation.get();
         let options = Options {
             operation,
@@ -411,21 +556,24 @@ impl Ui {
         let events: Vec<_> = self.receiver.borrow().try_iter().collect();
         for event in events {
             match event {
-                Event::Dropped(paths) => self.start(paths)?,
+                Event::DropReady => self.finish_drop()?,
                 Event::Log(text, error) => {
                     self.log
                         .SetText(&hs(format!("{}{}\n\n", self.log.Text()?, text)))?;
                     if error {
-                        self.status.SetSeverity(InfoBarSeverity::Error)?;
-                        self.status.SetTitle(&hs("转换失败"))?;
-                        self.status.SetMessage(&hs(text))?;
-                        self.status.SetIsOpen(true)?;
+                        self.show_status("转换失败", &text, InfoBarSeverity::Error)?;
                     }
                 }
                 Event::Finished => {
                     self.set_busy(false)?;
                 }
             }
+        }
+        let now = Instant::now();
+        if self.busy_visual_at.get().is_some_and(|at| now >= at) {
+            self.busy_visual_at.set(None);
+            self.busy_visual_active.set(true);
+            self.apply_busy_visual(true)?;
         }
         Ok(())
     }
