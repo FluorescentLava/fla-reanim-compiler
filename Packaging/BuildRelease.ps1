@@ -79,6 +79,9 @@ try {
         $target = Join-Path $destination $relative
         New-Item -ItemType Directory -Path (Split-Path -Parent $target) -Force | Out-Null
         Copy-Item -LiteralPath $file.FullName -Destination $target -Force
+        # Only the archive needs fixed timestamps. Git must notice rebuilt
+        # executables even when their size matches the preceding release.
+        (Get-Item -LiteralPath $target).LastWriteTimeUtc = [DateTime]::UtcNow
     }
     Copy-Item -LiteralPath $zipPath -Destination (Join-Path $destination $zipName) -Force
     Copy-Item -LiteralPath $manifestPath -Destination (Join-Path $destination 'release-manifest.json') -Force
