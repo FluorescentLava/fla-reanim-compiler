@@ -140,215 +140,12 @@ pub fn restore_assets(input: &Path, output: &Path) -> Result<()> {
     Ok(())
 }
 
-/// Export editable library pixels beside a newly compiled classic resource.
-/// Discover nearby resources, or use the historical reanim-directory fallback.
-pub fn export_classic_assets(input: &Path, output: &Path) -> Result<usize> {
-    export_classic_assets_with_resources(input, output, None)
-}
-
-/// Export edited pixels to the same resource paths the game actually loads.
-/// This uses the editable library itself, including Adobe-saved files without
-/// the converter's source-recovery metadata.
-pub fn export_classic_assets_with_resources(
-    input: &Path,
-    output: &Path,
-    resource_root: Option<&Path>,
-) -> Result<usize> {
-    export_classic_assets_from_source(
-        &crate::forward::read_package(input)?,
-        input,
-        output,
-        resource_root,
-    )
-}
-pub(crate) fn export_classic_assets_from_source(
-    source: &crate::document::Source,
-    input: &Path,
-    output: &Path,
-    resource_root: Option<&Path>,
-) -> Result<usize> {
-    let members = &source.members;
-    let prefix = &source.prefix;
-    let member = |name: &str| {
-        let name = format!("{prefix}{}", name.replace('\\', "/"));
-        members.get(&name).or_else(|| {
-            members
-                .iter()
-                .find(|(key, _)| key.eq_ignore_ascii_case(&name))
-                .map(|(_, value)| value)
-        })
-    };
-    let catalog = Some(Catalog::new(input, resource_root));
-    let parent = output
-        .parent()
-        .context("invalid compiled output directory")?;
-    let mut mapping = BTreeMap::new();
-    let mut sprites: BTreeMap<String, Vec<(usize, RgbaImage)>> = BTreeMap::new();
-    let mut bitmaps = Vec::new();
-    source.document.descendants("DOMBitmapItem", &mut bitmaps);
-    for bitmap in bitmaps {
-        let name = bitmap.attrs.get("name").context("bitmap has no name")?;
-        let name = name.replace('\\', "/");
-        let bare = Path::new(&name)
-            .file_stem()
-            .unwrap_or_default()
-            .to_string_lossy();
-        let cel = bare
-            .rsplit_once("__REANIM_CEL_")
-            .and_then(|(name, index)| Some((name, index.parse::<usize>().ok()?)));
-        let resource = cel.map_or(bare.as_ref(), |(name, _)| name);
-        // JSFL preserves spaces, hyphens and repeated underscores in names.
-        let resource = resource.to_ascii_uppercase();
-        let mut properties = Vec::new();
-        bitmap.descendants("PD", &mut properties);
-        let original_id = properties
-            .into_iter()
-            .find(|n| n.attr("n") == "fla-reanim.resource-id" && n.attr("t") == "s")
-            .map(|n| n.attr("v"))
-            .filter(|v| !v.is_empty());
-        let id = if let Some(original_id) = original_id {
-            original_id.to_owned()
-        } else if resource.starts_with("IMAGE_") {
-            resource
-        } else {
-            format!("IMAGE_REANIM_{resource}")
-        };
-        let dat = bitmap
-            .attrs
-            .get("bitmapDataHRef")
-            .and_then(|path| member(&format!("bin/{path}")));
-        let data = if let Some(dat) = dat {
-            crate::plus::bitmap_pixels(dat)?
-        } else {
-            let href = bitmap.default("href", &name);
-            let png = member(href).or_else(|| member(&format!("LIBRARY/{href}")));
-            let Some(png) = png else {
-                continue;
-            };
-            crate::image_io::decode(png)?
-        };
-        if let Some((_, index)) = cel {
-            sprites.entry(id).or_default().push((index, data));
-            continue;
-        }
-        save_classic_asset(parent, &id, &data, catalog.as_ref(), &mut mapping)?;
-    }
-    let metadata: Value = members
-        .get(SPRITES)
-        .map(|v| serde_json::from_slice(v))
-        .transpose()?
-        .unwrap_or(Value::Null);
-    for (id, cells) in sprites {
-        let location = catalog.as_ref().and_then(|c| c.asset_location(&id));
-        let canonical_id = location.as_ref().map_or(id.as_str(), |l| l.id.as_str());
-        let meta = metadata.get(canonical_id).or_else(|| metadata.get(&id));
-        let layout = catalog
-            .as_ref()
-            .and_then(|c| c.cells.get(&canonical_id.to_uppercase()));
-        let width = cells[0].1.width();
-        let height = cells[0].1.height();
-        let columns = meta
-            .and_then(|m| m["columns"].as_u64())
-            .or_else(|| layout.map(|l| u64::from(l.0)))
-            .unwrap_or_else(|| cells.iter().map(|(i, _)| *i as u64 + 1).max().unwrap_or(1))
-            as u32;
-        let rows = meta
-            .and_then(|m| m["rows"].as_u64())
-            .or_else(|| layout.map(|l| u64::from(l.1)))
-            .unwrap_or(1) as u32;
-        ensure!(
-            columns > 0
-                && rows > 0
-                && columns <= 16384
-                && rows <= 16384
-                && u64::from(width) * u64::from(height) * u64::from(columns) * u64::from(rows)
-                    <= 64 * 1024 * 1024,
-            "Sprite allocation too large"
-        );
-        let mut sheet = if let Some(original) = meta
-            .and_then(|m| m["member"].as_str())
-            .and_then(|n| members.get(n))
-        {
-            crate::image_io::decode(original)?
-        } else if let Some(source) = location.as_ref().and_then(|l| l.source.as_ref()) {
-            load_image(source)?
-        } else {
-            ImageBuffer::from_pixel(width * columns, height * rows, image::Rgba([0, 0, 0, 0]))
-        };
-        for (index, cell) in cells {
-            ensure!(
-                index < (columns as usize) && cell.dimensions() == (width, height),
-                "Inconsistent sprite cells"
-            );
-            image::imageops::replace(&mut sheet, &cell, index as i64 * i64::from(width), 0);
-        }
-        ensure!(
-            sheet.dimensions() == (width * columns, height * rows),
-            "Original sprite sheet dimensions differ"
-        );
-        save_classic_asset(parent, &id, &sheet, catalog.as_ref(), &mut mapping)?;
-    }
-    if !mapping.is_empty() {
-        fs::write(
-            output.with_extension("assets.json"),
-            serde_json::to_vec_pretty(&mapping)?,
-        )?;
-    }
-    Ok(mapping.len())
-}
-
 fn safe_asset_relative(path: &Path) -> bool {
     !path.as_os_str().is_empty()
         && !path.to_string_lossy().contains(':')
         && path
             .components()
             .all(|c| matches!(c, std::path::Component::Normal(_)))
-}
-
-fn save_classic_asset(
-    parent: &Path,
-    id: &str,
-    image: &RgbaImage,
-    catalog: Option<&Catalog>,
-    mapping: &mut BTreeMap<String, String>,
-) -> Result<()> {
-    let location = catalog.and_then(|c| c.asset_location(id));
-    let stem = id
-        .strip_prefix("IMAGE_REANIM_")
-        .or_else(|| id.strip_prefix("IMAGE_"))
-        .unwrap_or(id);
-    ensure!(!stem.is_empty(), "Empty classic image ID {id}");
-    let relative = location
-        .as_ref()
-        .map(|l| l.relative.clone())
-        .unwrap_or_else(|| PathBuf::from(format!("reanim/{stem}.png")));
-    ensure!(safe_asset_relative(&relative), "Unsafe asset destination");
-    let path = parent.join(&relative);
-    fs::create_dir_all(path.parent().context("invalid asset path")?)?;
-    image.save(&path)?;
-    if let Some(location) = &location
-        && let Some(source) = &location.source
-        && let Some(catalog) = catalog
-        && let Some(mask) = independent_alpha_mask(source)
-        && let Ok(mask_relative) = mask.strip_prefix(&catalog.roots[0])
-    {
-        let mask_relative = mask_relative.with_extension("png");
-        ensure!(
-            safe_asset_relative(&mask_relative),
-            "Unsafe alpha destination"
-        );
-        let mask_path = parent.join(mask_relative);
-        fs::create_dir_all(mask_path.parent().context("invalid alpha path")?)?;
-        // The game replaces PNG alpha with this mask's blue channel. A new
-        // same-stem PNG also takes precedence over the original JPEG mask.
-        ImageBuffer::from_fn(image.width(), image.height(), |x, y| {
-            let alpha = image.get_pixel(x, y).0[3];
-            image::Rgba([alpha, alpha, alpha, 255])
-        })
-        .save(mask_path)?;
-    }
-    mapping.insert(id.to_owned(), relative.to_string_lossy().replace('\\', "/"));
-    Ok(())
 }
 
 /// Encode straight RGBA as Animate's premultiplied ARGB DAT pixels.
@@ -406,20 +203,12 @@ fn normalize(s: &str) -> String {
     out.trim_end_matches('_').to_owned()
 }
 
-struct AssetLocation {
-    id: String,
-    relative: PathBuf,
-    source: Option<PathBuf>,
-}
-
 struct Catalog {
     roots: Vec<PathBuf>,
     paths: HashMap<String, PathBuf>,
     normalized_paths: HashMap<String, PathBuf>,
     manifest_paths: HashMap<String, PathBuf>,
     cells: HashMap<String, (u32, u32)>,
-    destinations: HashMap<String, PathBuf>,
-    resource_ids: HashMap<PathBuf, String>,
 }
 impl Catalog {
     fn new(input: &Path, explicit: Option<&Path>) -> Self {
@@ -454,8 +243,6 @@ impl Catalog {
             normalized_paths: HashMap::new(),
             manifest_paths: HashMap::new(),
             cells: HashMap::new(),
-            destinations: HashMap::new(),
-            resource_ids: HashMap::new(),
         };
         for root in catalog.roots.clone() {
             let xml_path = root.join("resources.xml");
@@ -481,14 +268,6 @@ impl Catalog {
                                 let stem = root
                                     .join(folder.replace('\\', "/"))
                                     .join(path.replace('\\', "/"));
-                                let relative = PathBuf::from(folder.replace('\\', "/"))
-                                    .join(path.replace('\\', "/"));
-                                if safe_asset_relative(&relative) {
-                                    catalog
-                                        .destinations
-                                        .entry(id.to_uppercase())
-                                        .or_insert_with(|| relative.with_extension("png"));
-                                }
                                 let columns = e
                                     .attribute("cols")
                                     .and_then(|v| v.parse().ok())
@@ -506,10 +285,6 @@ impl Catalog {
                                         .manifest_paths
                                         .entry(id.to_uppercase())
                                         .or_insert_with(|| file.clone());
-                                    catalog
-                                        .resource_ids
-                                        .entry(file.clone())
-                                        .or_insert_with(|| id.clone());
                                     catalog.paths.entry(id.to_uppercase()).or_insert(file);
                                 }
                             }
@@ -602,43 +377,6 @@ impl Catalog {
             .or_else(|| self.normalized_paths.get(&normalize(id)))
             .cloned()
     }
-
-    fn asset_location(&self, id: &str) -> Option<AssetLocation> {
-        let source = self.resolve(id);
-        let id = source
-            .as_ref()
-            .and_then(|path| self.resource_ids.get(path))
-            .cloned()
-            .unwrap_or_else(|| id.to_owned());
-        let relative = self
-            .destinations
-            .get(&id.to_uppercase())
-            .cloned()
-            .or_else(|| {
-                source
-                    .as_ref()?
-                    .strip_prefix(self.roots.first()?)
-                    .ok()
-                    .map(|path| path.with_extension("png"))
-            })?;
-        let relative = if let Some(source) = &source {
-            let stem = source.file_stem()?.to_string_lossy();
-            if (stem.starts_with('_') || stem.ends_with('_'))
-                && find_image(&source.with_file_name(stem.trim_matches('_'))).is_none()
-            {
-                relative.with_file_name(format!("{}.png", stem.trim_matches('_')))
-            } else {
-                relative
-            }
-        } else {
-            relative
-        };
-        safe_asset_relative(&relative).then_some(AssetLocation {
-            id,
-            relative,
-            source,
-        })
-    }
 }
 fn is_image(path: &Path) -> bool {
     path.extension().is_some_and(|s| {
@@ -668,17 +406,6 @@ fn find_image(path: &Path) -> Option<PathBuf> {
             is_image(p)
                 && p.file_stem()
                     .is_some_and(|s| s.to_string_lossy().eq_ignore_ascii_case(&stem))
-        })
-}
-
-fn independent_alpha_mask(path: &Path) -> Option<PathBuf> {
-    let stem = path.file_stem()?.to_string_lossy();
-    find_image(&path.with_file_name(format!("_{stem}")))
-        .or_else(|| find_image(&path.with_file_name(format!("{stem}_"))))
-        .or_else(|| {
-            ((stem.starts_with('_') || stem.ends_with('_'))
-                && find_image(&path.with_file_name(stem.trim_matches('_'))).is_none())
-            .then(|| path.to_owned())
         })
 }
 

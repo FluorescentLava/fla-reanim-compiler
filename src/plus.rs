@@ -112,7 +112,7 @@ pub fn bitmap_dat(data: &[u8]) -> Result<Vec<u8>> {
 
 /// Decode directly to pixels when the caller will write a game asset. Avoid
 /// encoding an intermediate PNG only to decode it again before saving.
-pub(crate) fn bitmap_pixels(data: &[u8]) -> Result<image::RgbaImage> {
+fn bitmap_pixels(data: &[u8]) -> Result<image::RgbaImage> {
     if data.starts_with(b"\x89PNG") || data.starts_with(b"\xff\xd8") {
         return crate::image_io::decode(data);
     }

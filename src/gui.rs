@@ -558,6 +558,7 @@ impl Ui {
             match event {
                 Event::DropReady => self.finish_drop()?,
                 Event::Log(text, error) => {
+                    let text = workflow::display_message(&text);
                     self.log
                         .SetText(&hs(format!("{}{}\n\n", self.log.Text()?, text)))?;
                     if error {
@@ -604,10 +605,11 @@ fn run() -> Result<()> {
     Ok(())
 }
 fn show_error(message: &str) {
+    let message = workflow::display_message(message);
     unsafe {
         MessageBoxW(
             None,
-            windows::core::PCWSTR(hs(message).as_ptr()),
+            windows::core::PCWSTR(hs(&message).as_ptr()),
             w!("FLA Reanim Compiler"),
             MB_OK | MB_ICONERROR,
         );
@@ -617,7 +619,7 @@ fn main() {
     if std::env::args_os().len() > 1 {
         // CLI runs before WinUI initialization, so it requires no Windows App Runtime.
         if let Err(error) = workflow::cli(std::env::args().skip(1)) {
-            eprintln!("{error:#}");
+            eprintln!("{}", workflow::display_message(&format!("{error:#}")));
             std::process::exit(1);
         }
         return;

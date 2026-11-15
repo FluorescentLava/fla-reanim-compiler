@@ -113,7 +113,6 @@ pub(crate) struct Source {
     pub document: Element,
     pub libraries: BTreeMap<String, Element>,
     pub members: BTreeMap<String, Vec<u8>>,
-    pub prefix: String,
 }
 impl Source {
     pub fn from_members(members: BTreeMap<String, Vec<u8>>) -> Result<Self> {
@@ -144,7 +143,6 @@ impl Source {
             document,
             libraries,
             members,
-            prefix,
         })
     }
 }

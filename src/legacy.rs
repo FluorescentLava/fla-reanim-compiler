@@ -1075,7 +1075,6 @@ pub(crate) fn read_package(bytes: &[u8]) -> Result<Source> {
         document,
         libraries,
         members,
-        prefix: String::new(),
     })
 }
 

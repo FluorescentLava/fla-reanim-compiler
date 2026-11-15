@@ -29,7 +29,9 @@ pub struct Options {
 }
 #[derive(Debug, Serialize)]
 pub struct Report {
+    #[serde(serialize_with = "serialize_path")]
     pub input: PathBuf,
+    #[serde(serialize_with = "serialize_path")]
     pub output: PathBuf,
     pub tracks: usize,
     pub frames: usize,
@@ -37,6 +39,23 @@ pub struct Report {
     pub seconds: f64,
     pub bytes: u64,
     pub detail: String,
+}
+
+/// Keep Windows' extended-length paths for filesystem operations, but use
+/// ordinary drive/UNC spelling in UI messages and command-line reports.
+pub fn display_message(message: &str) -> String {
+    message.replace(r"\\?\UNC\", r"\\").replace(r"\\?\", "")
+}
+
+pub fn display_path(path: &Path) -> String {
+    display_message(&path.to_string_lossy())
+}
+
+fn serialize_path<S: serde::Serializer>(
+    path: &Path,
+    serializer: S,
+) -> std::result::Result<S::Ok, S::Error> {
+    serializer.serialize_str(&display_path(path))
 }
 pub fn default_output(input: &Path) -> PathBuf {
     let text = input.file_name().unwrap_or_default().to_string_lossy();
@@ -173,8 +192,10 @@ pub fn convert(input: &Path, options: &Options) -> Result<Report> {
         (definition, format!("{report:?}"))
     } else if let Some(bytes) = reverse::original_if_unchanged(&input)? {
         let definition = codec::decode(&bytes)?;
+        if bytes.ends_with(b"RPLS") {
+            reverse::restore_assets(&input, &staged)?;
+        }
         fs::write(&staged, bytes)?;
-        reverse::restore_assets(&input, &staged)?;
         (
             definition,
             "文档未编辑，保留原始 compiled 的全部字段".into(),
@@ -200,22 +221,7 @@ pub fn convert(input: &Path, options: &Options) -> Result<Report> {
             let definition =
                 forward::convert_source(&source, &input, options.resource_root.as_deref())?;
             fs::write(&staged, codec::encode(&definition, true)?)?;
-            let assets = reverse::export_classic_assets_from_source(
-                &source,
-                &input,
-                &staged,
-                options.resource_root.as_deref(),
-            )?;
-            (
-                definition,
-                if assets > 0 {
-                    format!(
-                        "经典编译；导出 {assets} 张可编辑贴图，请按 .assets.json 中的路径更新到游戏 Resources"
-                    )
-                } else {
-                    "经典编译".into()
-                },
-            )
+            (definition, "经典编译".into())
         }
     };
     if let Some(stage) = stage_size {
@@ -346,7 +352,7 @@ pub fn cli(args: impl IntoIterator<Item = String>) -> Result<()> {
                 } else {
                     println!(
                         "{}: {} tracks × {} frames, {} fps",
-                        input.display(),
+                        display_path(&input),
                         d.tracks.len(),
                         d.frame_count(),
                         d.fps
@@ -358,7 +364,11 @@ pub fn cli(args: impl IntoIterator<Item = String>) -> Result<()> {
             Ok(())
         })();
         if let Err(error) = result {
-            eprintln!("{}: {error:#}", input.display());
+            eprintln!(
+                "{}: {}",
+                display_path(&input),
+                display_message(&format!("{error:#}"))
+            );
             failed += 1;
         }
     }
