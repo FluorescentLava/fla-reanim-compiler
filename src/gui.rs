@@ -67,7 +67,12 @@ fn with_ui(action: impl FnOnce(&Ui) -> Result<()>) -> Result<()> {
 enum Event {
     DropReady,
     Log(String, bool),
-    Finished,
+    Finished {
+        operation: Operation,
+        succeeded: usize,
+        failed: usize,
+        seconds: f64,
+    },
 }
 type DroppedItems = windows_collections::IVectorView<windows::Storage::IStorageItem>;
 
@@ -517,11 +522,14 @@ impl Ui {
         };
         let sender = self.sender.clone();
         std::thread::spawn(move || {
+            let started = Instant::now();
+            let (mut succeeded, mut failed) = (0, 0);
             let mut jobs = Vec::new();
             for input in files {
                 match workflow::expand_inputs(&input, &options) {
                     Ok(inputs) => jobs.extend(inputs),
                     Err(error) => {
+                        failed += 1;
                         let _ = sender
                             .send(Event::Log(format!("{}：{error:#}", input.display()), true));
                     }
@@ -531,6 +539,7 @@ impl Ui {
                 let _ = sender.send(Event::Log(format!("正在转换 {}", input.display()), false));
                 match workflow::convert(&input, &options) {
                     Ok(report) => {
+                        succeeded += 1;
                         let _ = sender.send(Event::Log(
                             format!(
                                 "完成 → {}\n{} 轨道 · {} 帧 · {:.3} 秒\n{}",
@@ -544,11 +553,17 @@ impl Ui {
                         ));
                     }
                     Err(error) => {
+                        failed += 1;
                         let _ = sender.send(Event::Log(format!("失败：{error:#}"), true));
                     }
                 }
             }
-            let _ = sender.send(Event::Finished);
+            let _ = sender.send(Event::Finished {
+                operation,
+                succeeded,
+                failed,
+                seconds: started.elapsed().as_secs_f64(),
+            });
         });
         Ok(())
     }
@@ -565,8 +580,25 @@ impl Ui {
                         self.show_status("转换失败", &text, InfoBarSeverity::Error)?;
                     }
                 }
-                Event::Finished => {
+                Event::Finished {
+                    operation,
+                    succeeded,
+                    failed,
+                    seconds,
+                } => {
                     self.set_busy(false)?;
+                    if succeeded > 0 && failed == 0 {
+                        let title = match operation {
+                            Operation::Pack => "打包完成",
+                            Operation::Unpack => "解包完成",
+                            Operation::Auto | Operation::TvToPc => "转换完成",
+                        };
+                        self.show_status(
+                            title,
+                            &format!("成功 {succeeded} 个文件 · 用时 {seconds:.2} 秒"),
+                            InfoBarSeverity::Success,
+                        )?;
+                    }
                 }
             }
         }
