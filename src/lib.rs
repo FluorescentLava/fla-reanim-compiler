@@ -1,6 +1,8 @@
 pub mod codec;
+mod document;
 pub mod forward;
 pub mod image_io;
+mod legacy;
 pub mod plus;
 pub mod reverse;
 pub mod stage;

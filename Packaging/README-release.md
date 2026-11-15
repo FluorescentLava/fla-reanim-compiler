@@ -21,6 +21,8 @@
 .\fla-reanim-cli.exe --tv-to-pc C:\TV\reanim --output C:\PC\reanim
 ```
 
-默认优先减少关键帧；“精确采样”或 `--strict-tweens` 可收紧运动误差。compiled 已丢失原始手工关键帧，逆向会根据采样重建补间。老 Flash 的 OLE 二进制 FLA 需先用 Animate 另存为 ZIP/XFL。
+默认优先减少关键帧；“精确采样”或 `--strict-tweens` 可收紧运动误差。compiled 已丢失原始手工关键帧，逆向会根据采样重建补间。
+
+旧 Flash 的 OLE 二进制 FLA 可直接打包，不需要 Adobe 或另存为 XFL；读取舞台、图层、关键帧、经典运动补间、符号和内嵌位图。一次打包只解析一次输入，不生成中间 XML。旧二进制中的文本、声音/视频、形状补间、自定义缓动和滤镜等未支持结构会明确报错。
 
 源码及构建说明：[FluorescentLava/fla-reanim-compiler](https://github.com/FluorescentLava/fla-reanim-compiler)。发行文件的大小、SHA-256 和源码版本记录在同目录 `release-manifest.json`。

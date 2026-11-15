@@ -44,7 +44,8 @@
   <ScrollViewer Grid.Row="2" x:Name="StatusPopup" Height="0" IsHitTestVisible="False" IsTabStop="False" HorizontalScrollMode="Disabled" HorizontalScrollBarVisibility="Disabled" VerticalScrollMode="Disabled" VerticalScrollBarVisibility="Hidden">
    <Grid x:Name="StatusContent" Margin="0,18,0,0" Opacity="0">
    <InfoBar x:Name="Status" IsOpen="True" IsClosable="False" Padding="0,0,36,0"/>
-   <Button x:Name="DismissStatus" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="4" Padding="8" MinWidth="32" MinHeight="32" Background="Transparent" BorderThickness="0" ToolTipService.ToolTip="关闭" AutomationProperties.Name="关闭通知">
+   <!-- The first InfoBar text line is centred 26 DIPs below the top, also when the message wraps. -->
+   <Button x:Name="DismissStatus" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="4,10,4,0" Padding="8" Width="32" Height="32" MinWidth="32" MinHeight="32" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Background="Transparent" BorderThickness="0" ToolTipService.ToolTip="关闭" AutomationProperties.Name="关闭通知">
     <FontIcon Glyph="&#xE711;" FontSize="12"/>
    </Button>
    </Grid>

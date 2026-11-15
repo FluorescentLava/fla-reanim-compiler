@@ -1,5 +1,8 @@
 //! Animate ZIP/XFL reader and the classic PopCap reanim compiler.
-use crate::{Definition, MISSING, Track, Transform};
+use crate::{
+    Definition, MISSING, Track, Transform,
+    document::{Element, Source},
+};
 use anyhow::{Context, Result, bail, ensure};
 use std::{
     collections::{BTreeMap, HashMap, HashSet},
@@ -12,10 +15,18 @@ const MAX_PACKAGE: u64 = 512 * 1024 * 1024;
 const MAX_MEMBER: u64 = 128 * 1024 * 1024;
 const IDENTITY: [f64; 6] = [1., 0., 0., 1., 0., 0.];
 
-/// Read a ZIP FLA or an unpacked XFL directory. No archive member is extracted.
+/// Read a binary/ZIP FLA or an unpacked XFL directory. No archive member is extracted.
 /// Animate can overcount the final central-directory record; repair only the
 /// declared directory length after validating every central-directory record.
-pub fn read_package(input: &Path) -> Result<BTreeMap<String, Vec<u8>>> {
+pub(crate) fn read_package(input: &Path) -> Result<Source> {
+    if input
+        .extension()
+        .is_some_and(|e| e.eq_ignore_ascii_case("xfl"))
+        && let Some(parent) = input.parent()
+        && parent.join("DOMDocument.xml").is_file()
+    {
+        return read_package(parent);
+    }
     let mut result = BTreeMap::new();
     let mut total = 0u64;
     if input.is_dir() {
@@ -46,11 +57,15 @@ pub fn read_package(input: &Path) -> Result<BTreeMap<String, Vec<u8>>> {
             "FLA exceeds package size limit"
         );
         let mut bytes = fs::read(input).with_context(|| format!("Read {}", input.display()))?;
+        if bytes.starts_with(b"\xd0\xcf\x11\xe0\xa1\xb1\x1a\xe1") {
+            return crate::legacy::read_package(&bytes)
+                .with_context(|| format!("读取旧版二进制 FLA {}", input.display()));
+        }
         // Repair the known Animate defect even if the ZIP reader accepts it: a
         // successful open must still not trust a fabricated directory boundary.
         repair_directory(&mut bytes)?;
-        let mut archive = zip::ZipArchive::new(Cursor::new(bytes))
-            .context("FLA must be an Animate ZIP/XFL file (legacy binary FLA is unsupported)")?;
+        let mut archive =
+            zip::ZipArchive::new(Cursor::new(bytes)).context("FLA ZIP/XFL archive is invalid")?;
         ensure!(archive.len() <= 100_000, "Too many FLA members");
         for index in 0..archive.len() {
             let mut member = archive.by_index(index)?;
@@ -82,7 +97,7 @@ pub fn read_package(input: &Path) -> Result<BTreeMap<String, Vec<u8>>> {
         }
     }
     ensure!(!result.is_empty(), "FLA/XFL package is empty");
-    Ok(result)
+    Source::from_members(result)
 }
 
 fn validate_member(name: &str) -> Result<()> {
@@ -161,72 +176,7 @@ fn repair_directory(bytes: &mut [u8]) -> Result<()> {
     Ok(())
 }
 
-#[derive(Clone, Debug)]
-struct Element {
-    tag: String,
-    attrs: HashMap<String, String>,
-    children: Vec<Element>,
-    text: String,
-}
 impl Element {
-    fn parse(bytes: &[u8]) -> Result<Self> {
-        let text = std::str::from_utf8(bytes)
-            .context("XFL XML is not UTF-8")?
-            .trim_start_matches('\u{feff}');
-        let doc = roxmltree::Document::parse(text)?;
-        fn own(node: roxmltree::Node<'_, '_>) -> Element {
-            Element {
-                tag: node.tag_name().name().into(),
-                attrs: node
-                    .attributes()
-                    .map(|a| (a.name().into(), a.value().into()))
-                    .collect(),
-                children: node
-                    .children()
-                    .filter(|n| n.is_element())
-                    .map(own)
-                    .collect(),
-                text: node
-                    .children()
-                    .filter(|n| n.is_text())
-                    .filter_map(|n| n.text())
-                    .collect(),
-            }
-        }
-        Ok(own(doc.root_element()))
-    }
-    fn attr(&self, name: &str) -> &str {
-        self.attrs.get(name).map(String::as_str).unwrap_or("")
-    }
-    fn number(&self, name: &str, default: f64) -> f64 {
-        self.attr(name)
-            .parse()
-            .ok()
-            .filter(|v: &f64| v.is_finite())
-            .unwrap_or(default)
-    }
-    fn index(&self, name: &str, default: usize) -> usize {
-        self.attr(name).parse().unwrap_or(default)
-    }
-    fn child(&self, tag: &str) -> Option<&Self> {
-        self.children.iter().find(|c| c.tag == tag)
-    }
-    fn path(&self, path: &[&str]) -> Option<&Self> {
-        path.iter().try_fold(self, |n, t| n.child(t))
-    }
-    fn list(&self, a: &str, b: &str) -> Vec<&Self> {
-        self.child(a)
-            .map(|n| n.children.iter().filter(|c| c.tag == b).collect())
-            .unwrap_or_default()
-    }
-    fn descendants<'a>(&'a self, tag: &str, out: &mut Vec<&'a Self>) {
-        for c in &self.children {
-            if c.tag == tag {
-                out.push(c)
-            }
-            c.descendants(tag, out)
-        }
-    }
     fn matrix(&self) -> [f64; 6] {
         let m = self
             .path(&["matrix", "Matrix"])
@@ -293,30 +243,21 @@ fn blank() -> Transform {
     }
 }
 
-struct Package {
-    document: Element,
-    libraries: HashMap<String, Element>,
+struct Package<'a> {
+    document: &'a Element,
+    libraries: HashMap<String, &'a Element>,
     resources: Option<Catalog>,
     resource_ids: HashMap<String, String>,
     helper_tracks: HashSet<String>,
 }
-impl Package {
-    fn open(input: &Path, resources: Option<&Path>) -> Result<Self> {
-        Self::open_impl(input, resources, true)
-    }
-    fn open_impl(input: &Path, resources: Option<&Path>, load_catalog: bool) -> Result<Self> {
-        let members = read_package(input)?;
-        let (document_name, bytes) = members
-            .iter()
-            .find(|(n, _)| n.eq_ignore_ascii_case("DOMDocument.xml"))
-            .or_else(|| {
-                members
-                    .iter()
-                    .find(|(n, _)| n.to_ascii_lowercase().ends_with("/domdocument.xml"))
-            })
-            .context("FLA has no DOMDocument.xml")?;
-        let prefix = document_name.strip_suffix("DOMDocument.xml").unwrap_or("");
-        let document = Element::parse(bytes)?;
+impl<'a> Package<'a> {
+    fn from_source(
+        source: &'a Source,
+        input: &Path,
+        resources: Option<&Path>,
+        load_catalog: bool,
+    ) -> Result<Self> {
+        let document = &source.document;
         let mut helper_tracks = HashSet::new();
         for property in document.list("persistentData", "PD") {
             if property.attr("n") == "fla-reanim.compiled-helper-tracks"
@@ -339,17 +280,10 @@ impl Package {
             }
         }
         let mut libraries = HashMap::new();
-        for (name, bytes) in &members {
-            let relative = name.strip_prefix(prefix).unwrap_or(name);
-            if relative.to_ascii_lowercase().starts_with("library/")
-                && relative.to_ascii_lowercase().ends_with(".xml")
-            {
-                let root =
-                    Element::parse(bytes).with_context(|| format!("Invalid library XML {name}"))?;
-                for candidate in [relative, root.attr("name")] {
-                    for key in library_keys(candidate) {
-                        libraries.entry(key).or_insert_with(|| root.clone());
-                    }
+        for (name, root) in &source.libraries {
+            for candidate in [name.as_str(), root.attr("name")] {
+                for key in library_keys(candidate) {
+                    libraries.entry(key).or_insert(root);
                 }
             }
         }
@@ -368,7 +302,7 @@ impl Package {
     fn library(&self, name: &str) -> Option<&Element> {
         library_keys(name)
             .iter()
-            .find_map(|k| self.libraries.get(k))
+            .find_map(|k| self.libraries.get(k).copied())
     }
     fn image(&self, name: &str) -> String {
         if let Some(id) = self.resource_ids.get(name) {
@@ -397,7 +331,10 @@ impl Package {
 /// Whether visible content requires the enhanced hierarchy/vector importer.
 /// Locator artwork is only an authoring aid and never forces Plus mode.
 pub fn needs_plus(input: &Path) -> Result<bool> {
-    let p = Package::open_impl(input, None, false)?;
+    needs_plus_source(&read_package(input)?, input)
+}
+pub(crate) fn needs_plus_source(source: &Source, input: &Path) -> Result<bool> {
+    let p = Package::from_source(source, input, None, false)?;
     requires_plus(&p, p.timeline()?, 0, false)
 }
 fn requires_plus(
@@ -407,12 +344,12 @@ fn requires_plus(
     nonrendering: bool,
 ) -> Result<bool> {
     ensure!(depth <= 64, "Cyclic or excessive FLA symbol nesting");
-    if node.tag == "DOMLayer" && package.ignored(node) {
+    if node.name == "DOMLayer" && package.ignored(node) {
         return Ok(false);
     }
     let nonrendering =
-        nonrendering || (node.tag == "DOMLayer" && nonrendering_layer(node.attr("name")));
-    if node.tag == "DOMLayer" {
+        nonrendering || (node.name == "DOMLayer" && nonrendering_layer(node.attr("name")));
+    if node.name == "DOMLayer" {
         for frame in frames(node) {
             if frame
                 .child("elements")
@@ -424,11 +361,11 @@ fn requires_plus(
         }
         return Ok(false);
     }
-    if node.tag == "IKTree" || (node.tag == "DOMShape" && !nonrendering) {
+    if node.name == "IKTree" || (node.name == "DOMShape" && !nonrendering) {
         return Ok(true);
     }
     if matches!(
-        node.tag.as_str(),
+        node.name.as_str(),
         "DOMSymbolInstance" | "DOMGraphicInstance"
     ) {
         let name = node.attr("libraryItemName");
@@ -458,7 +395,14 @@ pub fn convert(input: &Path) -> Result<Definition> {
     convert_with_resources(input, None)
 }
 pub fn convert_with_resources(input: &Path, resources: Option<&Path>) -> Result<Definition> {
-    let package = Package::open(input, resources)?;
+    convert_source(&read_package(input)?, input, resources)
+}
+pub(crate) fn convert_source(
+    source: &Source,
+    input: &Path,
+    resources: Option<&Path>,
+) -> Result<Definition> {
+    let package = Package::from_source(source, input, resources, true)?;
     let timeline = package.timeline()?;
     let mut ik = Vec::new();
     timeline.descendants("IKTree", &mut ik);
@@ -530,33 +474,30 @@ pub fn convert_with_resources(input: &Path, resources: Option<&Path>) -> Result<
                 let a = build_transform(&package, start, layer_name);
                 let next = samples.get(key_index + 1).and_then(|s| s.get(render_index));
                 let endpoint = next.map(|next| build_transform(&package, next, layer_name));
+                let motion = if span.attr("tweenType").eq_ignore_ascii_case("motion") {
+                    next.zip(endpoint.as_ref())
+                        .map(|(next, endpoint)| MotionTween::new(start, next, &a, endpoint))
+                } else {
+                    None
+                };
+                let ease = if span.attrs.contains_key("acceleration") {
+                    -span.number("acceleration", 0.)
+                } else {
+                    span.number("tweenEasing", 0.)
+                }
+                .clamp(-100., 100.) as f32
+                    / 100.;
                 for frame in start_frame..end_frame {
-                    track.transforms[frame] = if span
-                        .attr("tweenType")
-                        .eq_ignore_ascii_case("motion")
-                    {
-                        next.zip(endpoint.as_ref())
-                            .map(|(next, endpoint)| {
-                                let time = (frame - start_frame) as f32
-                                    / (end_frame - start_frame).max(1) as f32;
-                                // Animate stores the opposite sign of JSFL's
-                                // tweenEasing in the XFL acceleration attribute.
-                                let ease = if span.attrs.contains_key("acceleration") {
-                                    -span.number("acceleration", 0.)
-                                } else {
-                                    span.number("tweenEasing", 0.)
-                                }
-                                .clamp(-100., 100.)
-                                    as f32
-                                    / 100.;
-                                tween(start, next, &a, endpoint, time + ease * time * (1. - time))
-                            })
-                            .unwrap_or_else(|| a.clone())
+                    track.transforms[frame] = if let Some(motion) = &motion {
+                        let time =
+                            (frame - start_frame) as f32 / (end_frame - start_frame).max(1) as f32;
+                        motion.sample(&a, time + ease * time * (1. - time))
                     } else {
                         a.clone()
                     };
                 }
             }
+
             // JSFL uses '_' to clear text because an empty value means carry
             // the previous string forward in the reanim format.
             let mut previous_text = String::new();
@@ -715,7 +656,7 @@ fn collect(
         let basis = parent.child(element.matrix());
         let matrix = basis.matrix();
         let alpha = alpha * element.alpha() as f32;
-        match element.tag.as_str() {
+        match element.name.as_str() {
             "DOMBitmapInstance" => out.push(Renderable {
                 matrix,
                 basis,
@@ -805,7 +746,7 @@ fn collect(
             }),
             "DOMShape" => bail!(
                 "Classic compilation cannot render {}; use --plus for vector parts",
-                element.tag
+                element.name
             ),
             "DOMStaticText" => {
                 let runs = element.list("textRuns", "DOMTextRun");
@@ -851,7 +792,7 @@ fn collect(
             }
             "DOMDynamicText" | "DOMInputText" => bail!(
                 "Classic compilation does not support {} font/text layout; convert the text explicitly before export",
-                element.tag
+                element.name
             ),
             _ => collect(p, element, basis, alpha, depth, nonrendering, out)?,
         }
@@ -921,66 +862,95 @@ fn near(mut value: f64, previous: f64) -> f64 {
     }
     value
 }
-fn tween(start: &Renderable, end: &Renderable, a: &Transform, b: &Transform, t: f32) -> Transform {
-    let lerp = |a: f64, b: f64| a + (b - a) * t as f64;
-    let mut out = a.clone();
-    // Flash samples the outer instance's tween before the JSFL exporter
-    // unwraps its static symbol contents. Interpolating flattened endpoints
-    // incorrectly straightens the arc of every offset child bitmap.
-    let start_outer = start.basis.outer.unwrap_or(IDENTITY);
-    let original_end_outer = end.basis.outer.unwrap_or(IDENTITY);
-    let mut end_outer = original_end_outer;
-    let mut end_point = end.point;
-    if a.image == b.image
-        && start.basis.inner != end.basis.inner
-        && let Some(start_inverse) = inverse(start.basis.inner)
-        && let Some(end_inverse) = inverse(end.basis.inner)
-    {
-        // A following key may wrap the same bitmap in a different symbol
-        // (stock Polevaulter's "Tween 1"). Express that endpoint and its pivot
-        // in the starting symbol's registration space before interpolating.
-        end_outer = multiply(original_end_outer, multiply(end.basis.inner, start_inverse));
-        end_point = point(multiply(start.basis.inner, end_inverse), end.point);
-    }
-    let ac = decompose(start_outer);
-    let bc = decompose(end_outer);
-    let sx = lerp(ac[0], bc[0]);
-    let sy = lerp(ac[1], bc[1]);
-    let kx = lerp(ac[2], near(bc[2], ac[2]));
-    let ky = lerp(ac[3], near(bc[3], ac[3]));
-    let a0 = sx * kx.to_radians().cos();
-    let b0 = sx * kx.to_radians().sin();
-    let c0 = -sy * ky.to_radians().sin();
-    let d0 = sy * ky.to_radians().cos();
-    let ca = point(start_outer, start.point);
-    let cb = point(original_end_outer, end.point);
-    let pivot = [
-        lerp(start.point[0], end_point[0]),
-        lerp(start.point[1], end_point[1]),
-    ];
-    let outer = [
-        a0,
-        b0,
-        c0,
-        d0,
-        lerp(ca[0], cb[0]) - a0 * pivot[0] - c0 * pivot[1],
-        lerp(ca[1], cb[1]) - b0 * pivot[0] - d0 * pivot[1],
-    ];
-    let mut composed = multiply(outer, start.basis.inner);
-    composed[4] += lerp(
-        start.matrix[4] - start.basis.matrix()[4],
-        end.matrix[4] - end.basis.matrix()[4],
-    );
-    let [sx, sy, kx, ky] = decompose(composed);
-    out.values[0] = composed[4] as f32;
-    out.values[1] = composed[5] as f32;
-    out.values[2] = kx as f32;
-    out.values[3] = ky as f32;
-    out.values[4] = sx as f32;
-    out.values[5] = sy as f32;
-    out.values[7] = a.values[7] + (b.values[7] - a.values[7]) * t;
-    quantize(out)
+// Endpoints, registration-space correction and decomposition are invariant
+// throughout a keyframe span; calculate them once, then only sample the pose.
+struct MotionTween {
+    ac: [f64; 4],
+    bc: [f64; 4],
+    ca: [f64; 2],
+    cb: [f64; 2],
+    start_point: [f64; 2],
+    end_point: [f64; 2],
+    inner: [f64; 6],
+    correction: [f64; 2],
+    alpha: [f32; 2],
 }
+impl MotionTween {
+    fn new(start: &Renderable, end: &Renderable, a: &Transform, b: &Transform) -> Self {
+        // Flash samples the outer instance's tween before the JSFL exporter
+        // unwraps its static symbol contents. Interpolating flattened endpoints
+        // incorrectly straightens the arc of every offset child bitmap.
+        let start_outer = start.basis.outer.unwrap_or(IDENTITY);
+        let original_end_outer = end.basis.outer.unwrap_or(IDENTITY);
+        let mut end_outer = original_end_outer;
+        let mut end_point = end.point;
+        if a.image == b.image
+            && start.basis.inner != end.basis.inner
+            && let Some(start_inverse) = inverse(start.basis.inner)
+            && let Some(end_inverse) = inverse(end.basis.inner)
+        {
+            // A following key may wrap the same bitmap in a different symbol
+            // (stock Polevaulter's "Tween 1"). Express that endpoint and its pivot
+            // in the starting symbol's registration space before interpolating.
+            end_outer = multiply(original_end_outer, multiply(end.basis.inner, start_inverse));
+            end_point = point(multiply(start.basis.inner, end_inverse), end.point);
+        }
+        let ac = decompose(start_outer);
+        let mut bc = decompose(end_outer);
+        bc[2] = near(bc[2], ac[2]);
+        bc[3] = near(bc[3], ac[3]);
+        Self {
+            ac,
+            bc,
+            ca: point(start_outer, start.point),
+            cb: point(original_end_outer, end.point),
+            start_point: start.point,
+            end_point,
+            inner: start.basis.inner,
+            correction: [
+                start.matrix[4] - start.basis.matrix()[4],
+                end.matrix[4] - end.basis.matrix()[4],
+            ],
+            alpha: [a.values[7], b.values[7]],
+        }
+    }
+    fn sample(&self, a: &Transform, t: f32) -> Transform {
+        let lerp = |a: f64, b: f64| a + (b - a) * t as f64;
+        let sx = lerp(self.ac[0], self.bc[0]);
+        let sy = lerp(self.ac[1], self.bc[1]);
+        let kx = lerp(self.ac[2], self.bc[2]);
+        let ky = lerp(self.ac[3], self.bc[3]);
+        let a0 = sx * kx.to_radians().cos();
+        let b0 = sx * kx.to_radians().sin();
+        let c0 = -sy * ky.to_radians().sin();
+        let d0 = sy * ky.to_radians().cos();
+        let pivot = [
+            lerp(self.start_point[0], self.end_point[0]),
+            lerp(self.start_point[1], self.end_point[1]),
+        ];
+        let outer = [
+            a0,
+            b0,
+            c0,
+            d0,
+            lerp(self.ca[0], self.cb[0]) - a0 * pivot[0] - c0 * pivot[1],
+            lerp(self.ca[1], self.cb[1]) - b0 * pivot[0] - d0 * pivot[1],
+        ];
+        let mut composed = multiply(outer, self.inner);
+        composed[4] += lerp(self.correction[0], self.correction[1]);
+        let [sx, sy, kx, ky] = decompose(composed);
+        let mut out = a.clone();
+        out.values[0] = composed[4] as f32;
+        out.values[1] = composed[5] as f32;
+        out.values[2] = kx as f32;
+        out.values[3] = ky as f32;
+        out.values[4] = sx as f32;
+        out.values[5] = sy as f32;
+        out.values[7] = self.alpha[0] + (self.alpha[1] - self.alpha[0]) * t;
+        quantize(out)
+    }
+}
+
 fn normalize_angles(track: &mut Track) {
     for index in [2, 3] {
         let mut previous = None;

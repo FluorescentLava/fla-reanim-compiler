@@ -154,17 +154,21 @@ pub fn export_classic_assets_with_resources(
     output: &Path,
     resource_root: Option<&Path>,
 ) -> Result<usize> {
-    let members = crate::forward::read_package(input)?;
-    let (document_name, document) = members
-        .iter()
-        .find(|(name, _)| name.eq_ignore_ascii_case("DOMDocument.xml"))
-        .or_else(|| {
-            members
-                .iter()
-                .find(|(name, _)| name.to_ascii_lowercase().ends_with("/domdocument.xml"))
-        })
-        .context("FLA has no DOMDocument.xml")?;
-    let prefix = &document_name[..document_name.len() - "DOMDocument.xml".len()];
+    export_classic_assets_from_source(
+        &crate::forward::read_package(input)?,
+        input,
+        output,
+        resource_root,
+    )
+}
+pub(crate) fn export_classic_assets_from_source(
+    source: &crate::document::Source,
+    input: &Path,
+    output: &Path,
+    resource_root: Option<&Path>,
+) -> Result<usize> {
+    let members = &source.members;
+    let prefix = &source.prefix;
     let member = |name: &str| {
         let name = format!("{prefix}{}", name.replace('\\', "/"));
         members.get(&name).or_else(|| {
@@ -174,19 +178,16 @@ pub fn export_classic_assets_with_resources(
                 .map(|(_, value)| value)
         })
     };
-    let xml = std::str::from_utf8(document)?;
-    let doc = roxmltree::Document::parse(xml)?;
     let catalog = Some(Catalog::new(input, resource_root));
     let parent = output
         .parent()
         .context("invalid compiled output directory")?;
     let mut mapping = BTreeMap::new();
     let mut sprites: BTreeMap<String, Vec<(usize, RgbaImage)>> = BTreeMap::new();
-    for bitmap in doc
-        .descendants()
-        .filter(|n| n.has_tag_name("DOMBitmapItem"))
-    {
-        let name = bitmap.attribute("name").context("bitmap has no name")?;
+    let mut bitmaps = Vec::new();
+    source.document.descendants("DOMBitmapItem", &mut bitmaps);
+    for bitmap in bitmaps {
+        let name = bitmap.attrs.get("name").context("bitmap has no name")?;
         let name = name.replace('\\', "/");
         let bare = Path::new(&name)
             .file_stem()
@@ -198,15 +199,13 @@ pub fn export_classic_assets_with_resources(
         let resource = cel.map_or(bare.as_ref(), |(name, _)| name);
         // JSFL preserves spaces, hyphens and repeated underscores in names.
         let resource = resource.to_ascii_uppercase();
-        let original_id = bitmap
-            .descendants()
-            .find(|node| {
-                node.has_tag_name("PD")
-                    && node.attribute("n") == Some("fla-reanim.resource-id")
-                    && node.attribute("t") == Some("s")
-            })
-            .and_then(|node| node.attribute("v"))
-            .filter(|id| !id.is_empty());
+        let mut properties = Vec::new();
+        bitmap.descendants("PD", &mut properties);
+        let original_id = properties
+            .into_iter()
+            .find(|n| n.attr("n") == "fla-reanim.resource-id" && n.attr("t") == "s")
+            .map(|n| n.attr("v"))
+            .filter(|v| !v.is_empty());
         let id = if let Some(original_id) = original_id {
             original_id.to_owned()
         } else if resource.starts_with("IMAGE_") {
@@ -215,34 +214,24 @@ pub fn export_classic_assets_with_resources(
             format!("IMAGE_REANIM_{resource}")
         };
         let dat = bitmap
-            .attribute("bitmapDataHRef")
+            .attrs
+            .get("bitmapDataHRef")
             .and_then(|path| member(&format!("bin/{path}")));
         let data = if let Some(dat) = dat {
-            crate::plus::bitmap_dat(dat)?
+            crate::plus::bitmap_pixels(dat)?
         } else {
-            let href = bitmap.attribute("href").unwrap_or(&name);
+            let href = bitmap.default("href", &name);
             let png = member(href).or_else(|| member(&format!("LIBRARY/{href}")));
             let Some(png) = png else {
                 continue;
             };
-            let mut target = Cursor::new(Vec::new());
-            crate::image_io::decode(png)?.write_to(&mut target, ImageFormat::Png)?;
-            target.into_inner()
+            crate::image_io::decode(png)?
         };
         if let Some((_, index)) = cel {
-            sprites
-                .entry(id)
-                .or_default()
-                .push((index, crate::image_io::decode(&data)?));
+            sprites.entry(id).or_default().push((index, data));
             continue;
         }
-        save_classic_asset(
-            parent,
-            &id,
-            &crate::image_io::decode(&data)?,
-            catalog.as_ref(),
-            &mut mapping,
-        )?;
+        save_classic_asset(parent, &id, &data, catalog.as_ref(), &mut mapping)?;
     }
     let metadata: Value = members
         .get(SPRITES)

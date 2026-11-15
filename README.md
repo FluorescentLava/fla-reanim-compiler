@@ -21,7 +21,9 @@ TV → PC 会把 TV 的 20 字节轨道头、48 字节帧和每帧六个字符�
 
 经典模式输出游戏的 `0xDEADFED4` + zlib + `0xB393B4C0` DefMap 格式，支持原版单 run 静态文字、字体 URL 覆盖和 `attacher__` 指令。增强模式保留文件夹、DOMGroup、嵌套符号、父子骨骼、枢轴和 `betweenFrameMatrixList` 烘焙 IK 姿态，并把图片写在 compiled 旁边；游戏由 `ReanimPlusAnimation` 读取兼容的 RPLS v1 扩展。IK 或实际可见矢量自动使用增强模式。纯色矢量及描边由 Rust resvg 栅格化；增强模式的文本、遮罩、渐变和缺少烘焙姿态的 IK 继续给出具体错误。
 
-输入支持 Adobe Animate 的 ZIP/XFL FLA 和 XFL 目录，兼容 ZIP 目录长度多计 54 字节的情况。老 Flash 的 OLE 二进制 FLA 需要先用 Animate 另存为 ZIP/XFL。
+输入支持 Adobe Animate 的 ZIP/XFL FLA、XFL 目录和旧 Flash 的 OLE 二进制 FLA，兼容 ZIP 目录长度多计 54 字节的情况。二进制 FLA 直接读取 CFB 流和 MFC 对象，恢复舞台、图层、关键帧、经典运动补间、符号实例和内嵌位图，不生成中间 XFL/XML，也不需要安装 Adobe。当前支持 MX 2004 至 CS4 的常用图层、符号和位图结构；二进制输入中的文本、声音/视频、形状补间、自定义缓动和滤镜等未支持结构会给出具体错误。
+
+一次打包只解析一次源文件，模式判断、动画编译、贴图导出和舞台记录共享解析结果。符号按索引引用，补间区间的端点矩阵只分解一次；经典贴图直接由 DAT 解码到像素并写出 PNG，避免先编码 PNG 再解码、再编码。
 
 逆向读取 `Resources/resources.xml` 的资源 ID、图片路径和精灵图网格，支持 PNG/JPEG 以及游戏分离的 alpha 遮罩。优先传入 `--resource-root`；在项目目录内也会向上查找 Resources。Animate 位图支持未压缩 ARGB、分块的单一 zlib 流和直接保存的 JPEG；输出 DAT 使用实际的预乘 ARGB 像素布局。普通位图通过 graphic symbol 承载 alpha 和运动补间。
 

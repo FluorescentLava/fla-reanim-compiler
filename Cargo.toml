@@ -1,6 +1,6 @@
 [package]
 name = "fla-reanim"
-version = "2.0.0"
+version = "2.0.1"
 edition = "2024"
 default-run = "FlaReanimCompiler"
 build = "build.rs"
@@ -18,6 +18,8 @@ path = "src/main.rs"
 
 [dependencies]
 anyhow = "1"
+cfb = "0.16"
+encoding_rs = "0.8"
 flate2 = { version = "1", default-features = false, features = ["zlib-rs"] }
 zip = { version = "2", default-features = false, features = ["deflate"] }
 roxmltree = "0.21"

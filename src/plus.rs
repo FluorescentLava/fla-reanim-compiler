@@ -2,7 +2,10 @@
 //!
 //! The JSON extension is the version-one format consumed by ReanimPlusAnimation;
 //! image paths are relative to the compiled file. No authoring interpreter is used.
-use crate::{Definition, Track, Transform};
+use crate::{
+    Definition, Track, Transform,
+    document::{Element, Source},
+};
 use anyhow::{Context, Result, bail, ensure};
 use flate2::{Compression, Decompress, FlushDecompress, write::ZlibEncoder};
 use serde_json::{Value, json};
@@ -17,73 +20,8 @@ type Matrix = [f64; 6];
 const IDENTITY: Matrix = [1., 0., 0., 1., 0., 0.];
 const MAX_DECODED: usize = 512 * 1024 * 1024;
 
-#[derive(Clone, Debug)]
-struct Element {
-    name: String,
-    attrs: BTreeMap<String, String>,
-    children: Vec<Element>,
-}
-impl Element {
-    fn parse(bytes: &[u8]) -> Result<Self> {
-        let text = std::str::from_utf8(bytes)?.trim_start_matches('\u{feff}');
-        let doc = roxmltree::Document::parse(text)?;
-        fn own(n: roxmltree::Node<'_, '_>) -> Element {
-            Element {
-                name: n.tag_name().name().into(),
-                attrs: n
-                    .attributes()
-                    .map(|a| (a.name().into(), a.value().into()))
-                    .collect(),
-                children: n.children().filter(|n| n.is_element()).map(own).collect(),
-            }
-        }
-        Ok(own(doc.root_element()))
-    }
-    fn attr(&self, name: &str) -> &str {
-        self.attrs.get(name).map(String::as_str).unwrap_or("")
-    }
-    fn default<'a>(&'a self, name: &str, default: &'a str) -> &'a str {
-        self.attrs.get(name).map(String::as_str).unwrap_or(default)
-    }
-    fn child(&self, name: &str) -> Option<&Element> {
-        self.children.iter().find(|n| n.name == name)
-    }
-    fn path(&self, path: &str) -> Option<&Element> {
-        path.split('/').try_fold(self, |n, part| n.child(part))
-    }
-    fn children_named<'a>(&'a self, name: &'a str) -> impl Iterator<Item = &'a Element> {
-        self.children.iter().filter(move |n| n.name == name)
-    }
-    fn descendants<'a>(&'a self, name: &str, output: &mut Vec<&'a Element>) {
-        for child in &self.children {
-            if child.name == name {
-                output.push(child);
-            }
-            child.descendants(name, output);
-        }
-    }
-    fn num(&self, name: &str, default: f64) -> Result<f64> {
-        let value = self
-            .attrs
-            .get(name)
-            .map(|v| v.parse::<f64>())
-            .transpose()?
-            .unwrap_or(default);
-        ensure!(value.is_finite(), "Non-finite XFL {name}");
-        Ok(value)
-    }
-    fn integer(&self, name: &str, default: usize) -> Result<usize> {
-        Ok(self
-            .attrs
-            .get(name)
-            .map(|v| v.parse::<usize>())
-            .transpose()?
-            .unwrap_or(default))
-    }
-}
-
 fn matrix(e: &Element) -> Result<Matrix> {
-    let Some(m) = e.path("matrix/Matrix") else {
+    let Some(m) = e.path(&["matrix", "Matrix"]) else {
         return Ok(IDENTITY);
     };
     matrix_attrs(m)
@@ -168,6 +106,16 @@ pub fn bitmap_dat(data: &[u8]) -> Result<Vec<u8>> {
     if data.starts_with(b"\x89PNG") || data.starts_with(b"\xff\xd8") {
         return Ok(data.to_vec());
     }
+    let pixels = bitmap_pixels(data)?;
+    rgba_png(pixels.width(), pixels.height(), pixels.as_raw())
+}
+
+/// Decode directly to pixels when the caller will write a game asset. Avoid
+/// encoding an intermediate PNG only to decode it again before saving.
+pub(crate) fn bitmap_pixels(data: &[u8]) -> Result<image::RgbaImage> {
+    if data.starts_with(b"\x89PNG") || data.starts_with(b"\xff\xd8") {
+        return crate::image_io::decode(data);
+    }
     ensure!(
         data.len() >= 26 && data[..2] == [3, 5],
         "Unsupported Animate bitmap DAT encoding; export linked PNG assets"
@@ -237,7 +185,8 @@ pub fn bitmap_dat(data: &[u8]) -> Result<Vec<u8>> {
             rgba.push(a as u8);
         }
     }
-    rgba_png(width as u32, height as u32, &rgba)
+    image::RgbaImage::from_raw(width as u32, height as u32, rgba)
+        .context("Invalid Animate bitmap pixel count")
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -275,12 +224,12 @@ struct Node {
     bone: bool,
     pivot: Option<Vec<f64>>,
 }
-struct Importer {
+struct Importer<'a> {
     source: PathBuf,
     output: PathBuf,
-    package: BTreeMap<String, Vec<u8>>,
-    media: HashMap<String, Element>,
-    symbols: HashMap<String, Element>,
+    package: &'a BTreeMap<String, Vec<u8>>,
+    media: HashMap<String, &'a Element>,
+    symbols: HashMap<String, &'a Element>,
     nodes: Vec<Node>,
     node_ids: HashMap<String, usize>,
     images: Vec<String>,
@@ -293,7 +242,7 @@ struct Importer {
     baked_ik: usize,
     fps: f64,
 }
-impl Importer {
+impl Importer<'_> {
     fn read(&self, name: &str) -> Result<&[u8]> {
         let name = safe_member(name)?;
         self.package
@@ -453,7 +402,7 @@ impl Importer {
             transform = multiply(inverse(basis)?, transform);
         }
         let alpha = element
-            .path("color/Color")
+            .path(&["color", "Color"])
             .map(|e| e.num("alphaMultiplier", 1.))
             .transpose()?
             .unwrap_or(1.);
@@ -514,8 +463,8 @@ impl Importer {
                 let timeline = self
                     .symbols
                     .get(library)
-                    .with_context(|| format!("Unknown FLA symbol: {library}"))?
-                    .clone();
+                    .with_context(|| format!("Unknown FLA symbol: {library}"))?;
+                let timeline = *timeline;
                 let total = duration(&timeline)?;
                 let mut local = element.integer("firstFrame", 0)?;
                 let loop_mode = element.default("loop", "loop");
@@ -875,33 +824,40 @@ impl Importer {
 /// Import FLA/XFL into the engine-compatible enhanced graph, extracting images.
 /// The caller decides whether to write JSON or `encode` the compiled container.
 pub fn import(input: &Path, output: &Path, resource_root: Option<&Path>) -> Result<Value> {
-    let package = crate::forward::read_package(input)?;
-    let document = Element::parse(
-        package
-            .get("DOMDocument.xml")
-            .context("FLA has no DOMDocument.xml")?,
-    )?;
+    import_source(
+        &crate::forward::read_package(input)?,
+        input,
+        output,
+        resource_root,
+    )
+}
+pub(crate) fn import_source(
+    source: &Source,
+    input: &Path,
+    output: &Path,
+    resource_root: Option<&Path>,
+) -> Result<Value> {
+    let package = &source.members;
+    let document = &source.document;
     let fps = document.num("frameRate", 24.)?;
     ensure!(fps > 0. && fps <= 1000., "Invalid FLA frame rate");
     let mut media = HashMap::new();
     if let Some(items) = document.child("media") {
         for item in items.children_named("DOMBitmapItem") {
-            media.insert(item.attr("name").into(), item.clone());
+            media.insert(item.attr("name").into(), item);
         }
     }
     let mut symbols = HashMap::new();
     if let Some(items) = document.child("symbols") {
         for item in items.children_named("Include") {
             let href = safe_member(&format!("LIBRARY/{}", item.attr("href")))?;
-            let root = Element::parse(
-                package
-                    .get(&href)
-                    .with_context(|| format!("Missing symbol {href}"))?,
-            )?;
+            let root = source
+                .libraries
+                .get(&href)
+                .with_context(|| format!("Missing symbol {href}"))?;
             let timeline = root
-                .path("timeline/DOMTimeline")
-                .context("Symbol has no timeline")?
-                .clone();
+                .path(&["timeline", "DOMTimeline"])
+                .context("Symbol has no timeline")?;
             symbols.insert(root.attr("name").into(), timeline);
         }
     }

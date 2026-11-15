@@ -154,6 +154,7 @@ pub fn convert(input: &Path, options: &Options) -> Result<Report> {
             detail: "TV → PC 动画转换完成".into(),
         });
     }
+    let mut stage_size = None;
     let (definition, detail) = if compiled {
         let bytes = fs::read(&input)?;
         let definition = codec::decode(&bytes)?;
@@ -179,21 +180,28 @@ pub fn convert(input: &Path, options: &Options) -> Result<Report> {
             "文档未编辑，保留原始 compiled 的全部字段".into(),
         )
     } else {
-        let members = forward::read_package(&input)?;
-        let enhanced_source = members
+        let source = forward::read_package(&input)?;
+        stage_size = Some([
+            source.document.integer("width", 550)?,
+            source.document.integer("height", 400)?,
+        ]);
+        let enhanced_source = source
+            .members
             .get("META-INF/reanim-source.compiled")
             .is_some_and(|bytes| bytes.ends_with(b"RPLS"));
-        if options.plus || enhanced_source || forward::needs_plus(&input)? {
-            let graph = plus::import(&input, &staged, options.resource_root.as_deref())?;
+        if options.plus || enhanced_source || forward::needs_plus_source(&source, &input)? {
+            let graph =
+                plus::import_source(&source, &input, &staged, options.resource_root.as_deref())?;
             let bytes = plus::encode(&graph)?;
             let definition = codec::decode(&bytes)?;
             fs::write(&staged, bytes)?;
             (definition, "增强编译：分组、骨骼和部件图片".into())
         } else {
             let definition =
-                forward::convert_with_resources(&input, options.resource_root.as_deref())?;
+                forward::convert_source(&source, &input, options.resource_root.as_deref())?;
             fs::write(&staged, codec::encode(&definition, true)?)?;
-            let assets = reverse::export_classic_assets_with_resources(
+            let assets = reverse::export_classic_assets_from_source(
+                &source,
                 &input,
                 &staged,
                 options.resource_root.as_deref(),
@@ -210,21 +218,27 @@ pub fn convert(input: &Path, options: &Options) -> Result<Report> {
             )
         }
     };
-    if !compiled {
-        let members = forward::read_package(&input)?;
-        if let Some(bytes) = members.get("DOMDocument.xml") {
-            let source = std::str::from_utf8(bytes)?.trim_start_matches('\u{feff}');
-            let document = roxmltree::Document::parse(source)?;
-            let root = document.root_element();
-            let width: u32 = root.attribute("width").unwrap_or("550").parse()?;
-            let height: u32 = root.attribute("height").unwrap_or("400").parse()?;
-            fs::write(
-                staged.with_extension("authoring.json"),
-                serde_json::to_vec_pretty(
-                    &serde_json::json!({"stage":[width,height],"coordinate_origin":[0,0]}),
-                )?,
-            )?;
-        }
+    if let Some(stage) = stage_size {
+        fs::write(
+            staged.with_extension("authoring.json"),
+            serde_json::to_vec_pretty(
+                &serde_json::json!({"stage":stage,"coordinate_origin":[0,0]}),
+            )?,
+        )?;
+    } else if !compiled {
+        // Recovery uses the already verified ZIP snapshot but still preserves
+        // any stage dimensions stored in that document.
+        let source = forward::read_package(&input)?;
+        let stage = [
+            source.document.integer("width", 550)?,
+            source.document.integer("height", 400)?,
+        ];
+        fs::write(
+            staged.with_extension("authoring.json"),
+            serde_json::to_vec_pretty(
+                &serde_json::json!({"stage":stage,"coordinate_origin":[0,0]}),
+            )?,
+        )?;
     }
     let files = walkdir::WalkDir::new(staging.path())
         .into_iter()
